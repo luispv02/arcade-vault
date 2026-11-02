@@ -18,7 +18,7 @@ export default function NotFound() {
           Esta ficha no existe en el vault. Puede que el juego se haya retirado
           o que el enlace sea incorrecto.
         </p>
-        <Link href="/" className="btn lg pulse">
+        <Link href="/games" className="btn lg pulse">
           VOLVER AL VAULT
         </Link>
       </section>

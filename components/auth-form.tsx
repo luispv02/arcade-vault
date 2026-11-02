@@ -15,13 +15,13 @@ export function AuthForm() {
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     login({ name: (user || "PLAYER1").toUpperCase().slice(0, 10) });
-    router.push("/");
+    router.push("/games");
   };
 
   const guest = () => {
     // Invitado: sin av_user guardado (limpia cualquier sesión previa).
     logout();
-    router.push("/");
+    router.push("/games");
   };
 
   return (
