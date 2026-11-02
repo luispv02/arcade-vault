@@ -5,13 +5,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 
-type NavKey = "biblioteca" | "salon" | "acceso";
+type NavKey = "inicio" | "biblioteca" | "salon" | "acceso";
 
 function isActive(pathname: string, key: NavKey): boolean {
   switch (key) {
+    case "inicio":
+      return pathname === "/";
     case "biblioteca":
       // También activa en detalle y reproductor.
-      return pathname === "/" || pathname.startsWith("/juegos");
+      return pathname.startsWith("/games") || pathname.startsWith("/juegos");
     case "salon":
       return pathname.startsWith("/salon");
     case "acceso":
@@ -37,7 +39,10 @@ export function Nav() {
           </div>
         </Link>
         <div className="links">
-          <Link href="/" className={cls("biblioteca")}>
+          <Link href="/" className={cls("inicio")}>
+            Inicio
+          </Link>
+          <Link href="/games" className={cls("biblioteca")}>
             Biblioteca
           </Link>
           <Link href="/salon" className={cls("salon")}>
@@ -84,7 +89,10 @@ export function Nav() {
         >
           MENÚ
         </div>
-        <Link href="/" className={cls("biblioteca")} onClick={close}>
+        <Link href="/" className={cls("inicio")} onClick={close}>
+          Inicio
+        </Link>
+        <Link href="/games" className={cls("biblioteca")} onClick={close}>
           Biblioteca
         </Link>
         <Link href="/salon" className={cls("salon")} onClick={close}>
