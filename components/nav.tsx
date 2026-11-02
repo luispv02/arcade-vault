@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 
-type NavKey = "inicio" | "biblioteca" | "salon" | "acceso";
+type NavKey = "inicio" | "biblioteca" | "salon" | "about" | "acceso";
 
 function isActive(pathname: string, key: NavKey): boolean {
   switch (key) {
@@ -16,6 +16,8 @@ function isActive(pathname: string, key: NavKey): boolean {
       return pathname.startsWith("/games") || pathname.startsWith("/juegos");
     case "salon":
       return pathname.startsWith("/salon");
+    case "about":
+      return pathname === "/about";
     case "acceso":
       return pathname.startsWith("/acceso");
   }
@@ -47,6 +49,9 @@ export function Nav() {
           </Link>
           <Link href="/salon" className={cls("salon")}>
             Salón de la Fama
+          </Link>
+          <Link href="/about" className={cls("about")}>
+            Sobre nosotros
           </Link>
         </div>
         <div className="spacer"></div>
@@ -97,6 +102,9 @@ export function Nav() {
         </Link>
         <Link href="/salon" className={cls("salon")} onClick={close}>
           Salón de la Fama
+        </Link>
+        <Link href="/about" className={cls("about")} onClick={close}>
+          Sobre nosotros
         </Link>
         {user ? (
           <a
