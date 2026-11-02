@@ -116,7 +116,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ===== app frame ===== */
-body { position: relative; z-index: 2; display: flex; flex-direction: column; min-height: 100%; }
+.av-root { position: relative; z-index: 2; display: flex; flex-direction: column; min-height: 100%; }
 .av-main { flex: 1; }
 
 /* ===== pixel + neon text ===== */
@@ -501,6 +501,8 @@ body { position: relative; z-index: 2; display: flex; flex-direction: column; mi
 }
 .cover-rocas::before {
   content: "▲";
+  /* ▲ no existe en JetBrains Mono: el fallback ajustado de next/font (Arial, size-adjust) lo dibujaba ~2x más grande que en el template. */
+  font-family: "Courier New", monospace;
   position: absolute; left: 48%; top: 44%;
   color: var(--yellow); font-size: 22px;
   text-shadow: 0 0 8px var(--yellow);
