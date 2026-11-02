@@ -38,14 +38,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <div className="av-bg" aria-hidden="true" />
         <div className="av-noise" aria-hidden="true" />
-        <SessionProvider>
-          {/* Suspense: usePathname puede suspender en rutas con params no conocidos (cacheComponents) */}
-          <Suspense fallback={<nav className="av-nav" style={{ minHeight: 61 }} />}>
-            <Nav />
-          </Suspense>
-          <main className="av-main">{children}</main>
-          <Footer />
-        </SessionProvider>
+        {/* .av-root equivale al #root del template: queda por encima del fondo */}
+        <div className="av-root">
+          <SessionProvider>
+            {/* Suspense: usePathname puede suspender en rutas con params no conocidos (cacheComponents) */}
+            <Suspense fallback={<nav className="av-nav" style={{ minHeight: 61 }} />}>
+              <Nav />
+            </Suspense>
+            <main className="av-main">{children}</main>
+            <Footer />
+          </SessionProvider>
+        </div>
       </body>
     </html>
   );
