@@ -1302,6 +1302,11 @@ a { color: inherit; text-decoration: none; }
 .term-body .success { margin-top: 12px; color: var(--green); text-shadow: 0 0 6px rgba(0,255,136,0.45); font-weight: 700; white-space: pre-wrap; }
 .term-body .caret { animation: blink 1s steps(1) infinite; }
 
+/* Estado de error del envío (el template no lo define): mismo estilo terminal. */
+.contact-error { margin: 4px 0 14px; padding: 10px 12px; background: #000; border: 1px solid var(--magenta); box-shadow: 0 0 14px rgba(255,0,110,0.25); font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--magenta); text-shadow: 0 0 6px rgba(255,0,110,0.45); }
+.contact-error .prompt { color: var(--cyan); text-shadow: none; margin-right: 8px; }
+.contact-form .btn:disabled { opacity: 0.6; cursor: wait; }
+
 /* Aparición al hacer scroll: solo se oculta cuando el cliente montó (.armed)
    y el usuario no pidió movimiento reducido; sin JS el contenido queda visible. */
 @media (prefers-reduced-motion: no-preference) {
