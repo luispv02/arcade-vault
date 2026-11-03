@@ -1,6 +1,6 @@
 # SPEC 06 — Tabla de juegos y leaderboard en Supabase
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 04, SPEC 05
 > **Fecha:** 2026-11-03
 > **Objetivo:** Crear las tablas `games` y `scores` en Supabase, hacer que el catálogo y el Salón de la Fama (top por juego) lean de ellas en lugar de los datos mock, y guardar en `scores` la puntuación de Asteroides al terminar la partida con el nombre del jugador (o `INVITADO`).
