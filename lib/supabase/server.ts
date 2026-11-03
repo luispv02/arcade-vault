@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { Database } from "./database.types";
+
 /**
  * Cliente de Supabase para el servidor (Route Handlers, Server Functions y
  * Server Components). Crea una instancia nueva por petición: nunca lo guardes
@@ -21,7 +23,7 @@ export async function createClient() {
     );
   }
   const cookieStore = await cookies();
-  return createServerClient(url, key, {
+  return createServerClient<Database>(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -1,4 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "./database.types";
+
 /**
  * Cliente de Supabase para componentes cliente ("use client").
  * `createBrowserClient` reutiliza la misma instancia entre llamadas.
@@ -15,5 +17,5 @@ export function createClient() {
       "Falta la variable de entorno NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
     );
   }
-  return createBrowserClient(url, key);
+  return createBrowserClient<Database>(url, key);
 }
