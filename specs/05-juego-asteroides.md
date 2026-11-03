@@ -1,6 +1,6 @@
 # SPEC 05 — Juego Asteroides jugable en la plataforma
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a TypeScript el juego `references/templates/started-games/02-asteroids/` como un juego nuevo del catálogo con id `asteroides`, jugable en `/juegos/asteroides/jugar` dentro del marco CRT de la plataforma, con su HUD de canvas intacto y notificando su estado a React para mostrar también el HUD de la plataforma.
