@@ -1106,7 +1106,6 @@ a {
 .cover-arkanoid::after {
   background-repeat: no-repeat;
 }
-
 /* ===== detail screen ===== */
 .av-detail {
   display: grid;
@@ -1387,6 +1386,16 @@ a {
   height: 100%;
   display: block;
   /* Mantiene 4:3 y cabe en la pantalla sea cual sea su forma (barras negras si sobra espacio). */
+  object-fit: contain;
+}
+/* canvas de Arkanoid (resolución interna 800x600, escalado por CSS en 4:3; el motor
+   descuenta las barras negras de object-fit al convertir la posición del ratón) */
+.arkanoid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   object-fit: contain;
 }
 /* canvas de Tetris (resolución interna 460x600, escalado por CSS manteniendo proporción) */
