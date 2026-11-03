@@ -1,5 +1,11 @@
 import { LEVELS } from "./levels";
-import { EXPLOSION_DURATION, type BlockColor } from "./sprites";
+import {
+  EXPLOSION_DURATION,
+  EXPLOSION_FRAMES,
+  SPRITES,
+  drawSprite,
+  type BlockColor,
+} from "./sprites";
 import {
   BALL_SIZE,
   BASE_BALL_VX,
@@ -20,6 +26,13 @@ import {
   START_LIVES,
   W,
 } from "./utils";
+// Teclas cuyo comportamiento por defecto (scroll, etc.) hay que anular.
+const PREVENT_DEFAULT_CODES = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "KeyP",
+  "Escape",
+]);
 export interface ArkanoidSnapshot {
   score: number;
   lives: number;
@@ -77,7 +90,7 @@ export function startArkanoid(
   let score = 0;
   let lives = START_LIVES;
   let currentLevel = 1;
-  const paused = false;
+  let paused = false;
   let gameOver = false;
   let won = false;
   // ── Aviso a React ─────────────────────────────────────────────────────────
@@ -214,21 +227,173 @@ export function startArkanoid(
       }
     }
   }
-  // Arranca la partida cuando el spritesheet está cargado. Si `destroy()` se llamó
-  // antes, no se arranca nada.
+  // ── Dibujo ────────────────────────────────────────────────────────────────
+  function drawOverlay(message: string): void {
+    ctx!.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx!.fillRect(0, 0, W, H);
+    ctx!.fillStyle = "#fff";
+    ctx!.font = "bold 64px monospace";
+    ctx!.textAlign = "center";
+    ctx!.textBaseline = "middle";
+    ctx!.fillText(message, W / 2, H / 2);
+  }
+  // Pausa: solo «PAUSA» y cómo reanudar (el selector de nivel del original se elimina).
+  function drawPauseOverlay(): void {
+    ctx!.fillStyle = "rgba(0, 0, 0, 0.65)";
+    ctx!.fillRect(0, 0, W, H);
+    ctx!.fillStyle = "#fff";
+    ctx!.textAlign = "center";
+    ctx!.textBaseline = "middle";
+    ctx!.font = "bold 56px monospace";
+    ctx!.fillText("PAUSA", W / 2, H / 2 - 20);
+    ctx!.font = "bold 16px monospace";
+    ctx!.fillStyle = "rgba(255, 255, 255, 0.65)";
+    ctx!.fillText("P O ESC PARA CONTINUAR", W / 2, H / 2 + 28);
+  }
+  function draw(): void {
+    const c = ctx!;
+    c.fillStyle = "#000";
+    c.fillRect(0, 0, W, H);
+    for (const block of blocks) {
+      if (!block.alive) continue;
+      drawSprite(
+        c,
+        sheet,
+        SPRITES.blocks[block.color],
+        block.x,
+        block.y,
+        block.w,
+        block.h,
+      );
+    }
+    for (const exp of explosions) {
+      const frame = Math.min(
+        Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4),
+        3,
+      );
+      drawSprite(
+        c,
+        sheet,
+        EXPLOSION_FRAMES[exp.color][frame],
+        exp.x,
+        exp.y,
+        exp.w,
+        exp.h,
+      );
+    }
+    drawSprite(
+      c,
+      sheet,
+      SPRITES.paddle,
+      paddle.x,
+      paddle.y,
+      paddle.w,
+      paddle.h,
+    );
+    drawSprite(c, sheet, SPRITES.ball, ball.x, ball.y, ball.w, ball.h);
+    // HUD del canvas: solo mientras se juega, como en el original.
+    if (!gameOver) {
+      c.fillStyle = "#fff";
+      c.font = "bold 18px monospace";
+      c.textBaseline = "top";
+      c.textAlign = "left";
+      c.fillText("Score: " + score, 10, 10);
+      c.textAlign = "center";
+      c.fillText("Nivel: " + currentLevel, W / 2, 10);
+      const spacing = 4;
+      for (let i = 0; i < lives; i++) {
+        const bx = W - 10 - (lives - i) * (BALL_SIZE + spacing);
+        drawSprite(c, sheet, SPRITES.ball, bx, 10, BALL_SIZE, BALL_SIZE);
+      }
+    }
+    if (gameOver) drawOverlay(won ? "¡Completaste el juego!" : "GAME OVER");
+    if (paused) drawPauseOverlay();
+  }
+  // ── Bucle principal ───────────────────────────────────────────────────────
+  let lastTime: number | null = null;
+  let rafId = 0;
   let destroyed = false;
+  function loop(ts: number): void {
+    if (destroyed) return;
+    // dt limitado a 50 ms para evitar saltos al volver de una pestaña oculta.
+    const dt = lastTime === null ? 0 : Math.min((ts - lastTime) / 1000, 0.05);
+    lastTime = ts;
+    update(dt);
+    // Último frame: se dibuja el overlay y se detiene el bucle (toma el relevo el modal).
+    draw();
+    notify();
+    if (gameOver) return;
+    rafId = requestAnimationFrame(loop);
+  }
+  function togglePause(): void {
+    if (gameOver) return;
+    paused = !paused;
+    if (paused) {
+      cancelAnimationFrame(rafId);
+      draw();
+    } else {
+      // Al reanudar se reinicia el reloj para que no haya un salto de `dt`.
+      lastTime = null;
+      rafId = requestAnimationFrame(loop);
+    }
+    notify();
+  }
+  // ── Input ─────────────────────────────────────────────────────────────────
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (PREVENT_DEFAULT_CODES.has(e.code)) e.preventDefault();
+    if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+      keys[e.code] = true;
+    } else if ((e.code === "KeyP" || e.code === "Escape") && !e.repeat) {
+      togglePause();
+    }
+  };
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+      keys[e.code] = false;
+    }
+  };
+  // Si la ventana pierde el foco, se sueltan las teclas.
+  const onBlur = () => {
+    keys.ArrowLeft = false;
+    keys.ArrowRight = false;
+  };
+  // El canvas se escala por CSS con `object-fit: contain`: el área dibujada es más
+  // pequeña que su caja (barras negras), así que se descuenta escala y desplazamiento.
+  const onMouseMove = (e: MouseEvent) => {
+    if (paused || gameOver) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const scale = Math.min(rect.width / W, rect.height / H);
+    const offsetX = (rect.width - W * scale) / 2;
+    const x = (e.clientX - rect.left - offsetX) / scale;
+    paddle.x = Math.max(0, Math.min(W - paddle.w, x - paddle.w / 2));
+  };
+  // Arranca la partida cuando el spritesheet está cargado. Si `destroy()` se llamó
+  // antes, no se arranca nada (ni bucle ni listeners).
   function begin(): void {
     if (destroyed) return;
     initPaddle();
     loadLevel(1);
     notify();
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    canvas.addEventListener("mousemove", onMouseMove);
+    rafId = requestAnimationFrame(loop);
   }
+  canvas.width = W;
+  canvas.height = H;
   sheet.onload = begin;
   sheet.src = SPRITESHEET_URL;
   return {
     destroy() {
       destroyed = true;
       sheet.onload = null;
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      canvas.removeEventListener("mousemove", onMouseMove);
     },
   };
 }
