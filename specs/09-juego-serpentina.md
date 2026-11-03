@@ -3,13 +3,13 @@
 > **Estado:** Aprobado
 > **Depende de:** SPEC 05, SPEC 06
 > **Fecha:** 2026-11-03
-> **Objetivo:** Crear desde cero el juego de la serpiente como el juego `serpentina` del catálogo (que hoy es un placeholder), jugable en `/juegos/serpentina/jugar`, con frutas dibujadas desde el spritesheet `fruits.png`, que al chocar permite guardar la puntuación en `scores` con el modal «FIN DEL JUEGO» común.
+> **Objetivo:** Crear desde cero el juego de la serpiente como el juego `serpentina` del catálogo, jugable en `/juegos/serpentina/jugar`, con frutas dibujadas desde el spritesheet `fruits.png`, que al chocar permite guardar la puntuación en `scores` con el modal «FIN DEL JUEGO» común.
 
 ## Por qué existe esta spec
 
 Es el cuarto juego con motor real (tras Asteroides, Tetris y Arkanoid, SPEC 05, 07 y 08) y el primero **sin código de referencia**: no hay `references/templates/started-games/` de Snake, solo los sprites de fruta. Por eso esta spec define las reglas, la rejilla y el ritmo del juego, que en las anteriores se heredaban del original. El patrón técnico (motor en `lib/games/<id>/`, player cliente, `GameOverModal`, `saveScore`, mapa `PLAYERS` en la página de juego, leaderboard genérico de SPEC 06) no cambia.
 
-Otra diferencia: el catálogo ya contiene la fila `serpentina` (ARCADE, `green`, `cover-snake`, `sort_order` 3) sembrada en SPEC 06 como placeholder. Se **reutiliza** esa fila en vez de crear un id nuevo, para no tener dos juegos de serpiente en `/games`.
+Otra diferencia: SPEC 06 sembró una fila placeholder `serpentina` (ARCADE, `green`, `cover-snake`), pero los placeholders ya no están en la tabla `games` (comprobado con `select` al implementar el paso 2). Se **vuelve a insertar** con el mismo id y el mismo nombre de portada, como hicieron Tetris y Arkanoid.
 
 Los sprites vienen de `references/source-assets/snake-assets/` (`fruits.png` y el atlas `sprites.js`, obtenidos de The Spriters Resource, hoja del juego de Snake de Google). Se usan solo las frutas; la serpiente, la rejilla, el título y la portada son propios.
 
@@ -34,8 +34,8 @@ Los sprites vienen de `references/source-assets/snake-assets/` (`fruits.png` y e
 - Entrada: `keydown` en `window`, retirado en `destroy()`. `preventDefault` en `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `KeyW`, `KeyA`, `KeyS`, `KeyD`, `KeyP` y `Escape`.
 - Componente cliente `components/serpentina-player.tsx`: barra `player-hud` / `hud-stat` (Jugador, Puntuación, Longitud, Nivel), marco `.crt` / `.crt-screen` / `.crt-bottom` con la leyenda de controles, botón SALIR a `/juegos/serpentina` y `GameOverModal` cuando `state === "gameover"`.
 - `app/juegos/[id]/jugar/page.tsx`: se añade `serpentina` al mapa `PLAYERS`.
-- Portada: se **rediseña `.cover-snake`** en `app/globals.css` (mismo nombre, que ya apunta la fila `serpentina`) y se añade la clase del canvas `.serpentina-canvas`. La portada nueva es distinta de las existentes y usa solo CSS.
-- Migración `supabase/migrations/<timestamp>_add_game_serpentina.sql`, aplicada con `apply_migration` y copiada al repo, que **actualiza** la fila `serpentina` (descripciones reales y `sort_order`).
+- Portada: se **rediseña `.cover-snake`** en `app/globals.css` (mismo nombre que ya usaba el placeholder, que apunta la fila `serpentina`) y se añade la clase del canvas `.serpentina-canvas`. La portada nueva es distinta de las existentes y usa solo CSS.
+- Migración `supabase/migrations/<timestamp>_add_game_serpentina.sql`, aplicada con `apply_migration` y copiada al repo, que **inserta** la fila `serpentina` (idempotente).
 - Interfaz diseñada con `/frontend-design`, respetando el look actual.
 
 **Fuera de alcance (para otras specs):**
@@ -51,16 +51,16 @@ Los sprites vienen de `references/source-assets/snake-assets/` (`fruits.png` y e
 
 ## Modelo de datos
 
-Esta feature no cambia el esquema de la BD: actualiza una fila de `games` y define la API del motor.
+Esta feature no cambia el esquema de la BD: añade una fila a `games` y define la API del motor.
 
 ```sql
 -- supabase/migrations/<timestamp>_add_game_serpentina.sql
-update public.games
-set short = '...', long = '...', sort_order = 4
-where id = 'serpentina';
+insert into public.games (id, title, short, long, cat, color, cover, sort_order)
+values ('serpentina', 'SERPENTINA', '...', '...', 'ARCADE', 'green', 'cover-snake', 4)
+on conflict (id) do nothing;
 ```
 
-`id`, `title` (`SERPENTINA`), `cat` (`ARCADE`), `color` (`green`) y `cover` (`cover-snake`) se conservan. `short` y `long` se escriben en español: serpiente que crece al comer frutas, 10 puntos por fruta, velocidad que sube cada 5 frutas, fin al chocar con pared o con su cuerpo. `sort_order` pasa de 3 a 4 porque `arkanoid` ya ocupa el 3. La migración es idempotente (repetirla deja el mismo resultado).
+`title` es `SERPENTINA`, `cat` `ARCADE`, `color` `green` y `cover` `cover-snake`. `short` y `long` se escriben en español: serpiente que crece al comer frutas, 10 puntos por fruta, velocidad que sube cada 5 frutas, fin al chocar con pared o con su cuerpo. `sort_order` es 4 porque `arkanoid` ya ocupa el 3. La migración es idempotente (`on conflict do nothing`).
 
 ```ts
 // lib/games/serpentina/game.ts
@@ -101,14 +101,14 @@ Convenciones:
 - El sprite de fruta se escala a una altura de ≈ 36 px (`h` de origen 160) manteniendo proporción y centrado en su celda.
 - El bucle y el listener no arrancan hasta que la imagen carga; si `destroy()` se llama antes, no se arranca nada. `dt` se limita a 50 ms por frame para que volver de una pestaña oculta no produzca pasos en ráfaga.
 - Estado final: se dibuja el último frame con su overlay y se detiene el bucle; el modal toma el relevo.
-- Orden de despliegue: la fila `serpentina` ya existe, así que la ficha y `/juegos/serpentina/jugar` funcionan con el placeholder `GamePlayer` hasta el paso 7.
+- Orden de despliegue: la fila `serpentina` se inserta en el paso 3, así que la ficha y `/juegos/serpentina/jugar` funcionan con el placeholder `GamePlayer` hasta el paso 7.
 - `best` y `plays` siguen derivándose de `game_stats`; nada se guarda en el cliente.
 
 ## Plan de implementación
 
 1. Crear `public/games/serpentina/` y copiar `references/source-assets/snake-assets/fruits.png`. La app arranca sin cambios visibles; el archivo responde en `/games/serpentina/fruits.png`.
 2. Rediseñar `.cover-snake` en `app/globals.css` con `/frontend-design`, distinta del resto de portadas y solo con CSS. `/games` y `/juegos/serpentina` muestran la portada nueva sin otros cambios.
-3. Escribir la migración `add_game_serpentina`, aplicarla con `apply_migration` y copiarla a `supabase/migrations/`. Comprobar con `execute_sql` (solo `select`) que la fila `serpentina` tiene las descripciones nuevas y `sort_order = 4`, que `arkanoid` y los demás no cambian y que no hay puntuaciones sembradas para `serpentina` que falseen el ranking; ejecutar `get_advisors` y confirmar que no hay avisos nuevos. Jugar sigue usando el placeholder.
+3. Escribir la migración `add_game_serpentina`, aplicarla con `apply_migration` y copiarla a `supabase/migrations/`. Comprobar con `execute_sql` (solo `select`) que existe la fila `serpentina` con las descripciones y `sort_order = 4`, que `arkanoid` y los demás no cambian y que no hay puntuaciones previas para `serpentina` que falseen el ranking; ejecutar `get_advisors` y confirmar que no hay avisos nuevos. Jugar sigue usando el placeholder.
 4. Crear `lib/games/serpentina/utils.ts` (constantes y funciones puras: dirección opuesta, intervalo de paso según nivel, elección de celda libre) y `sprites.ts` (los 22 recortes del atlas, tipados). `npm run lint` pasa.
 5. Crear `lib/games/serpentina/game.ts` (parte 1): contexto 2D, estado en closure, carga de la imagen, serpiente inicial, fruta, cola de giros, `step()` con colisiones, crecimiento, nivel y victoria, y `notify`. Sin dibujo, bucle ni input. `npm run lint` pasa.
 6. Completar `game.ts` (parte 2): dibujo (tablero, serpiente, fruta con sprite, overlays), bucle con `requestAnimationFrame`, acumulador y `dt` ≤ 50 ms que arranca al cargar la imagen, entrada de teclado con `preventDefault`, pausa, último frame al terminar y `destroy()`. `npm run lint` pasa.
@@ -121,7 +121,7 @@ Cada paso deja la app arrancable. Se consultan las guías de `node_modules/next/
 
 - [ ] `npm run lint` y `npm run build` terminan sin errores.
 - [ ] `/games` muestra una única tarjeta «SERPENTINA» (ARCADE, green) con la portada nueva distinta de las demás, y `/juegos/serpentina` muestra su ficha con las descripciones nuevas y un botón de jugar que lleva a `/juegos/serpentina/jugar`.
-- [ ] La tabla `games` contiene `serpentina` con `sort_order = 4`, sin ninguna fila `snake` duplicada, y `asteroides`, `tetris` y `arkanoid` no cambian; `get_advisors` (security) no reporta avisos nuevos.
+- [ ] La tabla `games` contiene exactamente una fila `serpentina` con `sort_order = 4` y ninguna `snake`, y `asteroides`, `tetris` y `arkanoid` no cambian; `get_advisors` (security) no reporta avisos nuevos.
 - [ ] `/games/serpentina/fruits.png` responde con 200.
 - [ ] `/juegos/serpentina/jugar` muestra el canvas dentro del marco CRT y la partida arranca sola con la serpiente de 3 segmentos mirando a la derecha, una fruta visible con su sprite, score 0, longitud 3 y nivel 1.
 - [ ] La barra de la plataforma muestra Jugador (nombre de sesión o `INVITADO`), Puntuación, Longitud y Nivel, y sus valores coinciden en todo momento con el estado del juego.
@@ -150,7 +150,7 @@ Cada paso deja la app arrancable. Se consultan las guías de `node_modules/next/
 
 ## Decisiones
 
-- **Sí:** reutilizar la fila `serpentina` (id, título `SERPENTINA`, `cover-snake`) y actualizarla (decidido por el usuario); **No:** crear un id nuevo `snake`. Evita dos juegos de serpiente en `/games`. Es la primera vez que una migración de juego hace `update` en vez de `insert`; por eso la spec verifica que no quedan duplicados.
+- **Sí:** id `serpentina`, título `SERPENTINA` y portada `cover-snake` (decidido por el usuario); **No:** id `snake`. Al implementar se vio que la fila placeholder ya no existe en `games`, así que la migración es un `insert ... on conflict do nothing`, igual que Tetris y Arkanoid; **No:** `update` (no afectaría a ninguna fila) ni `on conflict do update` (se aparta del patrón).
 - **Sí:** `sort_order = 4`. Decisión mía: `arkanoid` ya tiene el 3 y así se evita un empate de orden.
 - **Sí:** Snake clásico en rejilla, sin vidas y con paredes que matan (decidido por el usuario); **No:** paredes que envuelven ni 3 vidas. Es el modo más reconocible y la puntuación se resuelve en una sola partida.
 - **Sí:** una fruta al azar de las 22 por aparición, siempre 10 puntos (decidido por el usuario); **No:** valores por fruta ni una fruta por nivel. El sprite es solo decoración, así que el ranking no depende de la suerte con las frutas.
@@ -173,7 +173,6 @@ Cada paso deja la app arrancable. Se consultan las guías de `node_modules/next/
 | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Los sprites proceden del juego de Snake de Google (vía The Spriters Resource) y podrían tener derechos de terceros | Solo se usan las frutas, en un proyecto educativo; serpiente, portada y título son propios. Revisar o sustituir el spritesheet antes de publicar. |
 | Las coordenadas del atlas (`y` 136–295) recortan mal algún sprite (se ve cortado o con restos del vecino)          | Verificar visualmente los 22 sprites en el paso 6; ajustar el rect en `sprites.ts` si alguno falla y anotarlo aquí.                               |
-| Actualizar en vez de insertar: `update` sobre `games` podría bloquearlo RLS si se ejecutara con rol cliente        | La migración se aplica con `apply_migration` (rol de propietario); se comprueba con `select` después. No se tocan las políticas.                  |
 | Puntuaciones sembradas previas para `serpentina` en `scores` que falsean el ranking                                | El paso 3 comprueba con `select`; si existen se avisa al usuario antes de borrar nada (no se borra en esta spec).                                 |
 | Escritura en el proyecto Supabase compartido sin rama de desarrollo                                                | Migración idempotente; revisar con `list_migrations` antes y después.                                                                             |
 | Giros dobles o rápidos matan injustamente a la serpiente                                                           | Cola de 2 giros y prohibición del giro de 180°; criterios de aceptación específicos.                                                              |
