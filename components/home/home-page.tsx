@@ -1,5 +1,5 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import { GAMES } from "@/lib/games";
 import {
   FAQ,
   FEATURES,
@@ -11,6 +11,7 @@ import {
 import { FeatureIcon } from "@/components/home/feature-icon";
 import { FloatingSilhouettes } from "@/components/home/floating-silhouettes";
 import { Reveal } from "@/components/home/reveal";
+import { GamesRail, GamesRailFallback } from "@/components/home/games-rail";
 
 const fmt = (n: number) => n.toLocaleString("es-ES");
 
@@ -78,19 +79,9 @@ export function HomePage() {
           <h2 className="section-title">JUEGOS DISPONIBLES AHORA</h2>
           <div className="section-rule"></div>
         </div>
-        <div className="mini-rail">
-          {GAMES.slice(0, 6).map((g) => (
-            <Link key={g.id} href={`/juegos/${g.id}`} className="mini-card">
-              <div className="mini-cover">
-                <div className={"cover-bg " + g.cover}></div>
-              </div>
-              <div className="mini-meta">
-                <div className="mini-title">{g.title}</div>
-                <div className="mini-cat">{g.cat}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <Suspense fallback={<GamesRailFallback />}>
+          <GamesRail />
+        </Suspense>
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <Link href="/games" className="btn lg">
             VER TODOS LOS JUEGOS →
@@ -156,9 +147,7 @@ export function HomePage() {
               {TOP_PLAYERS.map((r, i) => (
                 <div
                   key={r.player}
-                  className={
-                    "top-row" + (i < 3 ? ` top${i + 1}` : "")
-                  }
+                  className={"top-row" + (i < 3 ? ` top${i + 1}` : "")}
                 >
                   <span className="tp-rk">
                     #{String(r.rank).padStart(2, "0")}
