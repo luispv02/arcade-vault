@@ -1299,6 +1299,15 @@ a {
   /* Mantiene 4:3 y cabe en la pantalla sea cual sea su forma (barras negras si sobra espacio). */
   object-fit: contain;
 }
+/* canvas de Tetris (resolución interna 460x600, escalado por CSS manteniendo proporción) */
+.tetris-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
 /* Pantalla de juego sin scroll de página: el marco ocupa exactamente la ventana
    (nav + juego + footer = 100dvh) y la pantalla CRT se reparte el espacio sobrante. */
 .av-root:has(.av-player) {
