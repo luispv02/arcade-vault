@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { GAMES } from "@/lib/games";
+import type { GameWithStats } from "@/lib/games";
 import { useSession } from "@/components/session-provider";
 
 // Placeholder copiado del template: arena decorativa y puntuación que sube sola.
 // Se sustituirá por los juegos reales en specs posteriores.
-export function GamePlayer({ id }: { id: string }) {
-  const game = GAMES.find((g) => g.id === id);
+export function GamePlayer({ game }: { game: GameWithStats }) {
   const { user, saveScore } = useSession();
 
   const [score, setScore] = useState(0);
@@ -31,8 +30,6 @@ export function GamePlayer({ id }: { id: string }) {
     );
     return () => clearInterval(t);
   }, [over, paused]);
-
-  if (!game) return null;
 
   const restart = () => {
     setScore(0);

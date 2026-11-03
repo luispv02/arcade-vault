@@ -2,14 +2,14 @@
 
 import { useRef, type MouseEvent } from "react";
 import Link from "next/link";
-import type { Game } from "@/lib/games";
+import type { GameWithStats } from "@/lib/games";
 
-const BTN_COLOR: Partial<Record<Game["color"], string>> = {
+const BTN_COLOR: Partial<Record<GameWithStats["color"], string>> = {
   magenta: "magenta",
   yellow: "yellow",
 };
 
-export function GameCard({ game }: { game: Game }) {
+export function GameCard({ game }: { game: GameWithStats }) {
   const tiltRef = useRef<HTMLAnchorElement>(null);
 
   const onMove = (e: MouseEvent<HTMLAnchorElement>) => {
