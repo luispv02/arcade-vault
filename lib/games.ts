@@ -81,6 +81,17 @@ export const GAMES: Game[] = [
     plays: "15.6K",
   },
   {
+    id: "asteroides",
+    title: "ASTEROIDES",
+    short: "Pilota tu nave y esquiva un campo de rocas que se parten.",
+    long: "Una nave en un espacio sin bordes: lo que sale por un lado vuelve a entrar por el otro. Rota, propulsa y dispara para partir asteroides grandes en medianos y pequeños. Tienes 3 vidas, y un power-up de triple disparo puede salvarte cuando el campo se llene.",
+    cat: "SHOOTER",
+    cover: "cover-asteroides",
+    color: "magenta",
+    best: 0,
+    plays: "0",
+  },
+  {
     id: "ranaria",
     title: "RANARIA",
     short: "Cruza la autopista de pixeles.",

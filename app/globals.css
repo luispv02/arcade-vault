@@ -524,6 +524,27 @@ a { color: inherit; text-decoration: none; }
   text-shadow: 0 0 8px var(--yellow);
 }
 
+.cover-asteroides { background: radial-gradient(circle at 30% 70%, #2a0030, #05000f); }
+.cover-asteroides::after {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 78% 26%, transparent 0 20px, var(--magenta) 21px 23px, transparent 24px),
+    radial-gradient(circle at 20% 28%, transparent 0 12px, var(--magenta) 13px 15px, transparent 16px),
+    radial-gradient(circle at 62% 74%, transparent 0 9px, var(--magenta) 10px 12px, transparent 13px),
+    radial-gradient(circle at 46% 46%, var(--yellow) 0 2px, transparent 3px),
+    radial-gradient(circle at 40% 52%, var(--yellow) 0 2px, transparent 3px),
+    radial-gradient(circle at 52% 40%, var(--yellow) 0 2px, transparent 3px);
+}
+.cover-asteroides::before {
+  content: "▲";
+  font-family: "Courier New", monospace;
+  position: absolute; left: 30%; top: 56%;
+  color: var(--cyan); font-size: 22px;
+  transform: rotate(35deg);
+  text-shadow: 0 0 8px var(--cyan);
+}
+
 .cover-rana { background: linear-gradient(180deg,#001f2a,#0a0a18); }
 .cover-rana::after {
   content: "";
