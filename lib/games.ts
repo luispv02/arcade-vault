@@ -1,6 +1,27 @@
 export type GameCategory = "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
 export type GameColor = "cyan" | "magenta" | "yellow" | "green";
 
+/** Juego del catálogo con sus estadísticas, tal como lo devuelve `lib/data.ts`. */
+export interface GameWithStats {
+  id: string;
+  title: string;
+  short: string;
+  long: string;
+  cat: GameCategory;
+  cover: string;
+  color: GameColor;
+  sort_order: number;
+  best: number;
+  plays: number;
+}
+
+/** 12400 → "12.4K"; por debajo de 1000 se muestra el número tal cual. */
+export function formatPlays(n: number): string {
+  if (n < 1000) return String(n);
+  return `${(n / 1000).toFixed(1)}K`;
+}
+
+// TODO(SPEC 06, paso 4): `Game` y `GAMES` son el catálogo mock; se eliminan al migrar las pantallas.
 export interface Game {
   id: string;
   title: string;
