@@ -4,11 +4,13 @@ import { getGame } from "@/lib/data";
 import { GamePlayer } from "@/components/game-player";
 import { AsteroidsPlayer } from "@/components/asteroids-player";
 import { TetrisPlayer } from "@/components/tetris-player";
+import { ArkanoidPlayer } from "@/components/arkanoid-player";
 
 // Juegos con motor real. El resto de ids sigue con el placeholder `GamePlayer`.
 const PLAYERS: Record<string, () => React.JSX.Element> = {
   asteroides: AsteroidsPlayer,
   tetris: TetrisPlayer,
+  arkanoid: ArkanoidPlayer,
 };
 
 // La página es síncrona: `params` se lee dentro de <Suspense> (cacheComponents + partialPrefetching).
