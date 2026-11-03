@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { GAMES } from "@/lib/games";
 import { GamePlayer } from "@/components/game-player";
+import { AsteroidsPlayer } from "@/components/asteroids-player";
 
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
@@ -23,6 +24,8 @@ async function Player({
 }) {
   const { id } = await params;
   if (!GAMES.some((g) => g.id === id)) notFound();
+
+  if (id === "asteroides") return <AsteroidsPlayer />;
 
   return <GamePlayer id={id} />;
 }
