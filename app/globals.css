@@ -1447,6 +1447,15 @@ a {
   display: block;
   object-fit: contain;
 }
+/* canvas de Serpentina (resolución interna 800x600, escalado por CSS manteniendo 4:3) */
+.serpentina-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
 /* canvas de Tetris (resolución interna 460x600, escalado por CSS manteniendo proporción) */
 .tetris-canvas {
   position: absolute;
