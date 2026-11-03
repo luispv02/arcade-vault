@@ -3,6 +3,13 @@ import { notFound } from "next/navigation";
 import { getGame } from "@/lib/data";
 import { GamePlayer } from "@/components/game-player";
 import { AsteroidsPlayer } from "@/components/asteroids-player";
+import { TetrisPlayer } from "@/components/tetris-player";
+
+// Juegos con motor real. El resto de ids sigue con el placeholder `GamePlayer`.
+const PLAYERS: Record<string, () => React.JSX.Element> = {
+  asteroides: AsteroidsPlayer,
+  tetris: TetrisPlayer,
+};
 
 // La página es síncrona: `params` se lee dentro de <Suspense> (cacheComponents + partialPrefetching).
 export default function JugarPage(props: PageProps<"/juegos/[id]/jugar">) {
@@ -22,7 +29,8 @@ async function Player({
   const game = await getGame(id);
   if (!game) notFound();
 
-  if (id === "asteroides") return <AsteroidsPlayer />;
+  const RealPlayer = PLAYERS[id];
+  if (RealPlayer) return <RealPlayer />;
 
   return <GamePlayer game={game} />;
 }
