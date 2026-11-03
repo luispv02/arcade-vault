@@ -757,22 +757,71 @@ a {
   filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.4));
   image-rendering: pixelated;
 }
+/* Serpentina: el tablero 20×15 del juego (celda = 5cqw, damero oscuro) visto en el
+   instante previo a comer: la serpiente dobla dos esquinas, se aclara de la cola a la
+   cabeza y apunta a una manzana del spritesheet real. Todo mide en cqw, así escala
+   igual en la tarjeta (4:3), la ficha (16:10) y la miniatura (1:1); lo importante
+   queda en el tercio central vertical. */
 .cover-snake {
-  background: linear-gradient(135deg, #003a2a, #0a0a18);
+  container-type: inline-size;
+  background: radial-gradient(ellipse at 78% 40%, #0b3a2b, #03120c 70%);
 }
+/* Tablero + serpiente, centrados en vertical sobre una caja 4:3. */
+.cover-snake::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100cqw;
+  height: 75cqw;
+  transform: translateY(-50%);
+  background:
+    /* ojos de la cabeza (celda col 13, fila 5) */
+    radial-gradient(circle at 50% 50%, #fff 0 0.55cqw, transparent 0.6cqw)
+      67.2cqw 24.2cqw / 1.6cqw 1.6cqw no-repeat,
+    radial-gradient(circle at 50% 50%, #fff 0 0.55cqw, transparent 0.6cqw)
+      67.2cqw 29.2cqw / 1.6cqw 1.6cqw no-repeat,
+    radial-gradient(circle at 70% 50%, #04100a 0 0.3cqw, transparent 0.35cqw)
+      67.2cqw 24.2cqw / 1.6cqw 1.6cqw no-repeat,
+    radial-gradient(circle at 70% 50%, #04100a 0 0.3cqw, transparent 0.35cqw)
+      67.2cqw 29.2cqw / 1.6cqw 1.6cqw no-repeat,
+    /* juntas entre segmentos */
+    repeating-linear-gradient(
+        90deg,
+        transparent 0 calc(5cqw - 0.4cqw),
+        rgba(2, 20, 14, 0.7) calc(5cqw - 0.4cqw) 5cqw
+      ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 calc(5cqw - 0.4cqw),
+      rgba(2, 20, 14, 0.7) calc(5cqw - 0.4cqw) 5cqw
+    ),
+    /* cabeza */ linear-gradient(90deg, #5dffb4, #b8ffe0) 65cqw 25cqw / 5cqw
+      5cqw no-repeat,
+    /* tramo final, hacia la cabeza (fila 5, cols 8–12) */
+    linear-gradient(90deg, #12b873, #00ff88) 40cqw 25cqw / 25cqw 5cqw no-repeat,
+    /* tramo vertical (col 8, filas 6–9) */
+    linear-gradient(0deg, #0e8a58, #12b873) 40cqw 30cqw / 5cqw 20cqw no-repeat,
+    /* cola (fila 9, cols 2–7) */ linear-gradient(90deg, #07422d, #0e8a58) 10cqw
+      45cqw / 30cqw 5cqw no-repeat,
+    /* damero */
+    conic-gradient(#07261b 25%, #051d15 0 50%, #07261b 0 75%, #051d15 0) 0 0 /
+      10cqw 10cqw;
+  filter: drop-shadow(0 0 1.2cqw rgba(0, 255, 136, 0.35));
+}
+/* Manzana: primer recorte de fruits.png (110×160), escalado a 0.075cqw por píxel
+   (la hoja de 3790 px mide 284.25cqw) y sin suavizar para que sea pixel art nítido. */
 .cover-snake::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 70% 50%, var(--magenta) 0 6px, transparent 7px),
-    linear-gradient(90deg, var(--green) 0 40px, transparent 40px) 20% 50% /
-      200px 12px no-repeat,
-    linear-gradient(90deg, var(--green) 0 12px, transparent 12px)
-      calc(20% + 40px) calc(50% - 12px) / 12px 12px no-repeat,
-    linear-gradient(90deg, var(--green) 0 12px, transparent 12px)
-      calc(20% + 28px) calc(50% - 12px) / 12px 12px no-repeat;
-  filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
+  left: 76cqw;
+  top: calc(50% - 16cqw);
+  width: 8.25cqw;
+  height: 12cqw;
+  background: url("/games/serpentina/fruits.png") -2.55cqw -10.2cqw / 284.25cqw
+    auto no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 1.4cqw rgba(255, 0, 110, 0.75));
 }
 .cover-glot {
   background: radial-gradient(circle at 50% 50%, #1a002a, #0a0a18);
