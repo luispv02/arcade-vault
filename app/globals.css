@@ -728,6 +728,33 @@ a { color: inherit; text-decoration: none; }
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   display: block;
+  /* Mantiene 4:3 y cabe en la pantalla sea cual sea su forma (barras negras si sobra espacio). */
+  object-fit: contain;
+}
+
+/* Pantalla de juego sin scroll de página: el marco ocupa exactamente la ventana
+   (nav + juego + footer = 100dvh) y la pantalla CRT se reparte el espacio sobrante. */
+.av-root:has(.av-player) { height: 100dvh; min-height: 0; }
+.av-root:has(.av-player) .av-main { min-height: 0; display: flex; flex-direction: column; }
+.av-root:has(.av-player) .av-player {
+  flex: 1; min-height: 0; width: 100%;
+  margin: 16px auto; padding: 0 24px;
+  display: flex; flex-direction: column;
+}
+.av-root:has(.av-player) .player-hud { flex: none; margin-bottom: 14px; }
+.av-root:has(.av-player) .crt {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  padding: 16px;
+}
+.av-root:has(.av-player) .crt-screen {
+  flex: 1; min-height: 0;
+  aspect-ratio: auto;
+}
+.av-root:has(.av-player) .crt-bottom { flex: none; margin-top: 10px; }
+@media (max-width: 720px) {
+  .av-root:has(.av-player) .av-player { margin: 8px auto; padding: 0 12px; }
+  .av-root:has(.av-player) .crt { padding: 10px; border-radius: 18px; }
 }
 
 /* fake in-screen game */
