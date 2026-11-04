@@ -3519,3 +3519,72 @@ a {
     transition: none;
   }
 }
+/* ===== HUD compacto en móvil (SPEC 10) ===== */
+/* Elementos solo de móvil (PAUSA, ☰): ocultos en escritorio. */
+.hud-mobile-only {
+  display: none;
+}
+.hud-menu {
+  position: relative;
+}
+.hud-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 190px;
+  padding: 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+.hud-menu-panel .skin-select {
+  justify-content: space-between;
+}
+.hud-menu-panel .skin-select select {
+  min-height: 40px;
+}
+@media (pointer: coarse), (max-width: 720px) {
+  .hud-mobile-only {
+    display: inline-flex;
+  }
+  .hud-desktop-only,
+  .hud-secondary {
+    display: none !important;
+  }
+  .av-root:has(.av-player) .player-hud {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+  /* Las estadísticas llevan gap y wrap en línea: se fuerzan para quedar en una sola fila. */
+  .av-root:has(.av-player) .player-hud > div:first-child {
+    flex-wrap: nowrap !important;
+    gap: 16px !important;
+    min-width: 0;
+  }
+  .player-hud .hud-stat {
+    gap: 2px;
+  }
+  .player-hud .hud-stat .v {
+    font-size: 13px;
+  }
+  .player-hud .hud-stat .l {
+    font-size: 9px;
+  }
+  .player-hud .hud-actions {
+    flex: none;
+    gap: 6px;
+    align-items: center;
+  }
+  .player-hud .hud-actions .btn {
+    padding: 10px 12px;
+    font-size: 9px;
+    min-height: 40px;
+  }
+}
