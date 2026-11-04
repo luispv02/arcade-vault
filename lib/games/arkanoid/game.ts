@@ -1,4 +1,5 @@
 import { ARKANOID_PALETTES, DEFAULT_SKIN, type Skin } from "@/lib/skins";
+import type { TouchAction } from "@/lib/games/touch";
 import { LEVELS } from "./levels";
 import {
   EXPLOSION_DURATION,
@@ -43,6 +44,9 @@ export interface ArkanoidSnapshot {
 }
 export interface ArkanoidGame {
   setSkin(skin: Skin): void;
+  /** Entrada del mando virtual (SPEC 10): `left`/`right` mueven la pala mientras se mantienen; el resto no tiene efecto. */
+  input(action: TouchAction, down: boolean): void;
+  togglePause(): void;
   destroy(): void;
 }
 interface Block {
@@ -398,6 +402,16 @@ export function startArkanoid(
       pal = ARKANOID_PALETTES[skin];
       // En pausa o fin de partida el bucle no corre: se redibuja a mano.
       if (started && !destroyed && (paused || gameOver)) draw();
+    },
+    input(action, down) {
+      if (!started || destroyed) return;
+      if (action !== "left" && action !== "right") return;
+      // Soltar siempre se permite; pulsar solo con la partida en marcha.
+      if (down && (paused || gameOver)) return;
+      keys[action === "left" ? "ArrowLeft" : "ArrowRight"] = down;
+    },
+    togglePause() {
+      if (started && !destroyed) togglePause();
     },
     destroy() {
       destroyed = true;

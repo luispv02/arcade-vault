@@ -1,4 +1,5 @@
 import { DEFAULT_SKIN, TETRIS_PALETTES, type Skin } from "@/lib/skins";
+import type { TouchAction } from "@/lib/games/touch";
 import {
   BLOCK,
   COLS,
@@ -20,6 +21,9 @@ export interface TetrisSnapshot {
 }
 export interface TetrisGame {
   setSkin(skin: Skin): void;
+  /** Entrada del mando virtual (SPEC 10): solo `down: true` actúa; la repetición la hace el mando. */
+  input(action: TouchAction, down: boolean): void;
+  togglePause(): void;
   destroy(): void;
 }
 // Teclas cuyo comportamiento por defecto (scroll de la página) hay que anular.
@@ -305,32 +309,53 @@ export function startTetris(
     notify();
   }
   // ── Input ─────────────────────────────────────────────────────────────────
+  type Move = "left" | "right" | "down" | "rotate" | "hardDrop";
+  // Lógica común de teclado y mando virtual; ignora todo en pausa o fin de partida.
+  const applyMove = (move: Move) => {
+    if (paused || gameOver) return;
+    switch (move) {
+      case "left":
+        if (!collide(current.shape, current.x - 1, current.y)) current.x--;
+        break;
+      case "right":
+        if (!collide(current.shape, current.x + 1, current.y)) current.x++;
+        break;
+      case "down":
+        softDrop();
+        break;
+      case "rotate":
+        tryRotate();
+        break;
+      case "hardDrop":
+        hardDrop();
+        break;
+    }
+    notify();
+  };
+  const KEY_TO_MOVE: Record<string, Move> = {
+    ArrowLeft: "left",
+    ArrowRight: "right",
+    ArrowDown: "down",
+    ArrowUp: "rotate",
+    KeyX: "rotate",
+    Space: "hardDrop",
+  };
+  const TOUCH_TO_MOVE: Partial<Record<TouchAction, Move>> = {
+    left: "left",
+    right: "right",
+    down: "down",
+    up: "rotate",
+    a: "rotate",
+    b: "hardDrop",
+  };
   const onKeyDown = (e: KeyboardEvent) => {
     if (PREVENT_DEFAULT_CODES.has(e.code)) e.preventDefault();
     if (e.code === "KeyP") {
       togglePause();
       return;
     }
-    if (paused || gameOver) return;
-    switch (e.code) {
-      case "ArrowLeft":
-        if (!collide(current.shape, current.x - 1, current.y)) current.x--;
-        break;
-      case "ArrowRight":
-        if (!collide(current.shape, current.x + 1, current.y)) current.x++;
-        break;
-      case "ArrowDown":
-        softDrop();
-        break;
-      case "ArrowUp":
-      case "KeyX":
-        tryRotate();
-        break;
-      case "Space":
-        hardDrop();
-        break;
-    }
-    notify();
+    const move = KEY_TO_MOVE[e.code];
+    if (move) applyMove(move);
   };
   canvas.width = W;
   canvas.height = H;
@@ -343,6 +368,14 @@ export function startTetris(
       pal = TETRIS_PALETTES[skin];
       // En pausa o fin de partida el bucle no corre: se redibuja a mano.
       if (!destroyed && (paused || gameOver)) draw();
+    },
+    input(action, down) {
+      if (destroyed || !down) return;
+      const move = TOUCH_TO_MOVE[action];
+      if (move) applyMove(move);
+    },
+    togglePause() {
+      if (!destroyed) togglePause();
     },
     destroy() {
       destroyed = true;
