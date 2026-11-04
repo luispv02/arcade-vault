@@ -11,6 +11,7 @@ import {
   DEFAULT_SKIN,
   type Skin,
 } from "@/lib/skins";
+import type { TouchAction } from "@/lib/games/touch";
 import {
   H,
   POINTS,
@@ -25,11 +26,14 @@ export interface AsteroidsSnapshot {
   score: number;
   lives: number;
   level: number;
-  state: "playing" | "dead" | "gameover";
+  state: "playing" | "dead" | "paused" | "gameover";
 }
 
 export interface AsteroidsGame {
   setSkin(skin: Skin): void;
+  /** Entrada del mando virtual (SPEC 10): misma lógica que las teclas ←, →, ↑ (mantener) y Espacio (a). */
+  input(action: TouchAction, down: boolean): void;
+  togglePause(): void;
   destroy(): void;
 }
 
@@ -56,14 +60,23 @@ export function startAsteroids(
   const keys: Keys = {};
   const justPressed: Keys = {};
 
+  const pressKey = (code: string) => {
+    if (!keys[code]) justPressed[code] = true;
+    keys[code] = true;
+  };
   const onKeyDown = (e: KeyboardEvent) => {
     if (PREVENT_DEFAULT_CODES.has(e.code)) e.preventDefault();
-    if (!keys[e.code]) justPressed[e.code] = true;
-    keys[e.code] = true;
+    pressKey(e.code);
   };
   const onKeyUp = (e: KeyboardEvent) => {
     if (PREVENT_DEFAULT_CODES.has(e.code)) e.preventDefault();
     keys[e.code] = false;
+  };
+  const TOUCH_TO_CODE: Partial<Record<TouchAction, string>> = {
+    left: "ArrowLeft",
+    right: "ArrowRight",
+    up: "ArrowUp",
+    a: "Space",
   };
   // Si la ventana pierde el foco, se sueltan todas las teclas
   const onBlur = () => {
@@ -85,23 +98,25 @@ export function startAsteroids(
   let score = 0;
   let lives = 3;
   let level = 1;
-  let state: AsteroidsSnapshot["state"] = "playing";
+  let state: Exclude<AsteroidsSnapshot["state"], "paused"> = "playing";
+  let paused = false;
   let deadTimer = 0;
   let powerUpSpawned = false;
   let killsSinceSpawn = 0;
 
   let last: AsteroidsSnapshot | null = null;
   function notify(): void {
+    const shown: AsteroidsSnapshot["state"] = paused ? "paused" : state;
     if (
       last &&
       last.score === score &&
       last.lives === lives &&
       last.level === level &&
-      last.state === state
+      last.state === shown
     ) {
       return;
     }
-    last = { score, lives, level, state };
+    last = { score, lives, level, state: shown };
     onStateChange?.({ ...last });
   }
 
@@ -299,7 +314,8 @@ export function startAsteroids(
 
     drawHUD(c);
 
-    if (state === "gameover")
+    if (paused) drawOverlay(c, "PAUSA", "JUEGO EN PAUSA");
+    else if (state === "gameover")
       drawOverlay(
         c,
         "GAME OVER",
@@ -323,6 +339,20 @@ export function startAsteroids(
     rafId = requestAnimationFrame(loop);
   }
 
+  function togglePause(): void {
+    if (state === "gameover") return;
+    paused = !paused;
+    if (paused) {
+      cancelAnimationFrame(rafId);
+      draw(ctx!);
+    } else {
+      // Al reanudar se reinicia el reloj para que no haya un salto de `dt`.
+      lastTime = null;
+      rafId = requestAnimationFrame(loop);
+    }
+    notify();
+  }
+
   canvas.width = W;
   canvas.height = H;
   initGame();
@@ -335,6 +365,21 @@ export function startAsteroids(
   return {
     setSkin(skin) {
       pal = ASTEROIDS_PALETTES[skin];
+      // En pausa el bucle no corre: se redibuja a mano.
+      if (!destroyed && paused) draw(ctx!);
+    },
+    input(action, down) {
+      const code = TOUCH_TO_CODE[action];
+      if (destroyed || !code) return;
+      if (down) {
+        // Pulsar no actúa en pausa; soltar siempre se permite (nada queda pegado).
+        if (!paused) pressKey(code);
+      } else {
+        keys[code] = false;
+      }
+    },
+    togglePause() {
+      if (!destroyed) togglePause();
     },
     destroy() {
       destroyed = true;

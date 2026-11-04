@@ -3324,3 +3324,198 @@ a {
 .av-player[data-skin="clasico"] .modal-bd {
   background: rgba(0, 0, 0, 0.85);
 }
+/* ===== Mando táctil (SPEC 10). Oculto salvo en pantallas táctiles. ===== */
+.touch-pad {
+  display: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+.touch-pad button {
+  touch-action: none;
+  font-family: var(--pixel);
+  color: var(--ink);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 0;
+  cursor: pointer;
+  transition:
+    transform 0.06s,
+    box-shadow 0.06s,
+    background 0.06s;
+}
+.touch-pad button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+@media (pointer: coarse) {
+  .touch-pad {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex: none;
+    padding: 12px 8px calc(12px + env(safe-area-inset-bottom));
+  }
+}
+/* Cruceta: rejilla 3×3 con las flechas en cruz y un cubo central. */
+.tp-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 58px);
+  grid-template-rows: repeat(3, 58px);
+  grid-template-areas:
+    ". up ."
+    "left hub right"
+    ". down .";
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.18));
+}
+.tp-up {
+  grid-area: up;
+}
+.tp-left {
+  grid-area: left;
+}
+.tp-right {
+  grid-area: right;
+}
+.tp-down {
+  grid-area: down;
+}
+.tp-hub {
+  grid-area: hub;
+  background: var(--bg-3);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.tp-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+}
+.tp-up {
+  border-radius: 12px 12px 0 0;
+}
+.tp-down {
+  border-radius: 0 0 12px 12px;
+}
+.tp-left {
+  border-radius: 12px 0 0 12px;
+}
+.tp-right {
+  border-radius: 0 12px 12px 0;
+}
+.tp-arrow {
+  width: 20px;
+  height: 20px;
+  background: var(--cyan);
+  clip-path: polygon(50% 12%, 92% 88%, 8% 88%);
+  filter: drop-shadow(0 0 4px var(--cyan));
+}
+.tp-down .tp-arrow {
+  transform: rotate(180deg);
+}
+.tp-left .tp-arrow {
+  transform: rotate(-90deg);
+}
+.tp-right .tp-arrow {
+  transform: rotate(90deg);
+}
+.tp-key[data-on] {
+  background: rgba(0, 245, 255, 0.18);
+  border-color: var(--cyan);
+  box-shadow: inset 0 0 14px rgba(0, 245, 255, 0.35);
+}
+/* Botones de acción: B abajo-izquierda, A arriba-derecha (como en un mando clásico). */
+.tp-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+.tp-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.tp-btn-a {
+  margin-bottom: 38px;
+  border-color: var(--magenta);
+  box-shadow: 0 0 12px rgba(255, 0, 110, 0.3);
+}
+.tp-btn-b {
+  border-color: var(--yellow);
+  box-shadow: 0 0 12px rgba(245, 255, 0, 0.22);
+}
+.tp-letter {
+  font-size: 18px;
+  line-height: 1;
+}
+.tp-btn-a .tp-letter {
+  color: var(--magenta);
+  text-shadow: 0 0 6px var(--magenta);
+}
+.tp-btn-b .tp-letter {
+  color: var(--yellow);
+  text-shadow: 0 0 6px var(--yellow);
+}
+.tp-name {
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+.tp-btn[data-on] {
+  transform: scale(0.93);
+}
+.tp-btn-a[data-on] {
+  background: rgba(255, 0, 110, 0.22);
+  box-shadow: inset 0 0 16px rgba(255, 0, 110, 0.5);
+}
+.tp-btn-b[data-on] {
+  background: rgba(245, 255, 0, 0.16);
+  box-shadow: inset 0 0 16px rgba(245, 255, 0, 0.4);
+}
+/* Skins: retro y clásico son planas y cuadradas, sin brillos. */
+.av-player[data-skin="retro"] .touch-pad button,
+.av-player[data-skin="clasico"] .touch-pad button {
+  border-radius: 0;
+  box-shadow: none;
+  filter: none;
+  border-color: var(--ink-dim);
+}
+.av-player[data-skin="retro"] .tp-dpad,
+.av-player[data-skin="clasico"] .tp-dpad {
+  filter: none;
+}
+.av-player[data-skin="retro"] .tp-arrow,
+.av-player[data-skin="clasico"] .tp-arrow {
+  filter: none;
+}
+.av-player[data-skin="retro"] .tp-key[data-on],
+.av-player[data-skin="clasico"] .tp-key[data-on],
+.av-player[data-skin="retro"] .tp-btn[data-on],
+.av-player[data-skin="clasico"] .tp-btn[data-on] {
+  background: var(--ink);
+  box-shadow: none;
+}
+.av-player[data-skin="retro"] .tp-key[data-on] .tp-arrow,
+.av-player[data-skin="clasico"] .tp-key[data-on] .tp-arrow {
+  background: var(--bg);
+}
+.av-player[data-skin="retro"] .tp-btn[data-on] .tp-letter,
+.av-player[data-skin="clasico"] .tp-btn[data-on] .tp-letter,
+.av-player[data-skin="retro"] .tp-btn[data-on] .tp-name,
+.av-player[data-skin="clasico"] .tp-btn[data-on] .tp-name {
+  color: var(--bg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .touch-pad button {
+    transition: none;
+  }
+}
