@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { GameOverModal } from "@/components/game-over-modal";
+import { SkinSelect, useSkin } from "@/components/skin-select";
+import { getSkinSnapshot } from "@/lib/skins";
 import {
   startAsteroids,
   type AsteroidsSnapshot,
@@ -21,20 +23,33 @@ export function AsteroidsPlayer() {
   const [snap, setSnap] = useState<AsteroidsSnapshot>(INITIAL);
   // Cambiar `run` destruye el motor y arranca una partida nueva (JUGAR DE NUEVO).
   const [run, setRun] = useState(0);
+  const skin = useSkin();
+  const gameRef = useRef<ReturnType<typeof startAsteroids> | null>(null);
   const sessionName = user?.name ?? "INVITADO";
   const gameOver = snap.state === "gameover";
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const game = startAsteroids(canvas, { onStateChange: setSnap });
-    return () => game.destroy();
+    const game = startAsteroids(canvas, {
+      onStateChange: setSnap,
+      skin: getSkinSnapshot(),
+    });
+    gameRef.current = game;
+    return () => {
+      game.destroy();
+      gameRef.current = null;
+    };
   }, [run]);
+  // Cambiar de skin no reinicia la partida: solo cambia la paleta del motor.
+  useEffect(() => {
+    gameRef.current?.setSkin(skin);
+  }, [skin]);
   const playAgain = () => {
     setSnap(INITIAL);
     setRun((r) => r + 1);
   };
   return (
-    <div className="av-player fade-in">
+    <div className="av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -57,6 +72,7 @@ export function AsteroidsPlayer() {
           </div>
         </div>
         <div className="hud-actions">
+          <SkinSelect />
           <Link href="/juegos/asteroides" className="btn ghost">
             SALIR
           </Link>

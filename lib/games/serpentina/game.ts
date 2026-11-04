@@ -1,3 +1,4 @@
+import { DEFAULT_SKIN, SERPENTINA_PALETTES, type Skin } from "@/lib/skins";
 import { FRUITS, FRUIT_NAMES, type FruitName } from "./sprites";
 import {
   CELL,
@@ -29,6 +30,7 @@ export interface SerpentinaSnapshot {
   won: boolean; // true solo si el gameover llega por llenar el tablero
 }
 export interface SerpentinaGame {
+  setSkin(skin: Skin): void;
   destroy(): void;
 }
 interface Fruit {
@@ -37,12 +39,16 @@ interface Fruit {
 }
 export function startSerpentina(
   canvas: HTMLCanvasElement,
-  opts: { onStateChange?: (s: SerpentinaSnapshot) => void } = {},
+  opts: {
+    onStateChange?: (s: SerpentinaSnapshot) => void;
+    skin?: Skin;
+  } = {},
 ): SerpentinaGame {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("Serpentina: el canvas no ofrece un contexto 2D.");
   }
+  let pal = SERPENTINA_PALETTES[opts.skin ?? DEFAULT_SKIN];
   canvas.width = W;
   canvas.height = H;
   const g: CanvasRenderingContext2D = ctx;
@@ -155,27 +161,39 @@ export function startSerpentina(
     notify();
   }
   // ── Dibujo ──
-  const BOARD_DARK = "#051d15";
-  const BOARD_LIGHT = "#07261b";
-  const TAIL_RGB = [14, 138, 88];
-  const BODY_RGB = [0, 255, 136];
   function bodyColor(index: number): string {
     // De la cabeza (verde neón) a la cola (verde apagado).
     const t = snake.length > 1 ? index / (snake.length - 1) : 0;
     const mix = (i: number) =>
-      Math.round(BODY_RGB[i] + (TAIL_RGB[i] - BODY_RGB[i]) * t);
+      Math.round(pal.bodyRgb[i] + (pal.tailRgb[i] - pal.bodyRgb[i]) * t);
     return `rgb(${mix(0)}, ${mix(1)}, ${mix(2)})`;
   }
   function drawBoard() {
     for (let row = 0; row < ROWS; row++) {
       for (let col = 0; col < COLS; col++) {
-        g.fillStyle = (col + row) % 2 === 0 ? BOARD_LIGHT : BOARD_DARK;
+        g.fillStyle = (col + row) % 2 === 0 ? pal.boardLight : pal.boardDark;
         g.fillRect(col * CELL, row * CELL, CELL, CELL);
       }
     }
   }
   function drawFruit() {
-    if (!fruit || !image.complete || image.naturalWidth === 0) return;
+    if (!fruit) return;
+    if (!pal.sprites) {
+      const cx = fruit.cell.col * CELL + CELL / 2;
+      const cy = fruit.cell.row * CELL + CELL / 2;
+      g.fillStyle = pal.fruit;
+      if (pal.fruitShape === "pixel") {
+        // Cruz de píxeles, distinta del cuerpo cuadrado de la serpiente.
+        g.fillRect(cx - 5, cy - 15, 10, 30);
+        g.fillRect(cx - 15, cy - 5, 30, 10);
+      } else {
+        g.beginPath();
+        g.arc(cx, cy, 12, 0, Math.PI * 2);
+        g.fill();
+      }
+      return;
+    }
+    if (!image.complete || image.naturalWidth === 0) return;
     const rect = FRUITS[fruit.name];
     const scale = FRUIT_DRAW_H / rect.h;
     const dw = rect.w * scale;
@@ -183,7 +201,7 @@ export function startSerpentina(
     const dy = fruit.cell.row * CELL + (CELL - FRUIT_DRAW_H) / 2;
     g.save();
     g.imageSmoothingEnabled = false;
-    g.shadowColor = "rgba(255, 0, 110, 0.75)";
+    g.shadowColor = pal.fruitGlow;
     g.shadowBlur = 12;
     g.drawImage(
       image,
@@ -200,19 +218,19 @@ export function startSerpentina(
   }
   function drawSnake() {
     g.save();
-    g.shadowColor = "rgba(0, 255, 136, 0.45)";
-    g.shadowBlur = 8;
+    g.shadowColor = pal.bodyGlow;
+    g.shadowBlur = pal.glow;
     // De la cola a la cabeza, para que la cabeza quede encima.
     for (let i = snake.length - 1; i >= 0; i--) {
       const seg = snake[i];
-      g.fillStyle = i === 0 ? "#b8ffe0" : bodyColor(i);
+      g.fillStyle = i === 0 ? pal.head : bodyColor(i);
       g.beginPath();
       g.roundRect(
         seg.col * CELL + 2,
         seg.row * CELL + 2,
         CELL - 4,
         CELL - 4,
-        8,
+        pal.radius,
       );
       g.fill();
     }
@@ -225,11 +243,11 @@ export function startSerpentina(
     for (const side of [-1, 1]) {
       const ex = cx + -d.row * side * 8;
       const ey = cy + d.col * side * 8;
-      g.fillStyle = "#ffffff";
+      g.fillStyle = pal.eyeWhite;
       g.beginPath();
       g.arc(ex, ey, 5, 0, Math.PI * 2);
       g.fill();
-      g.fillStyle = "#04100a";
+      g.fillStyle = pal.eyePupil;
       g.beginPath();
       g.arc(ex + d.col * 2, ey + d.row * 2, 2.5, 0, Math.PI * 2);
       g.fill();
@@ -237,18 +255,18 @@ export function startSerpentina(
   }
   function drawOverlay(title: string, color: string, hint?: string) {
     g.save();
-    g.fillStyle = "rgba(3, 10, 8, 0.72)";
+    g.fillStyle = pal.overlayBg;
     g.fillRect(0, 0, W, H);
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillStyle = color;
     g.shadowColor = color;
-    g.shadowBlur = 16;
+    g.shadowBlur = pal.glow ? 16 : 0;
     g.font = "bold 56px monospace";
     g.fillText(title, W / 2, H / 2 - (hint ? 20 : 0));
     g.shadowBlur = 0;
     if (hint) {
-      g.fillStyle = "#e6e9ff";
+      g.fillStyle = pal.hint;
       g.font = "bold 16px monospace";
       g.fillText(hint, W / 2, H / 2 + 28);
     }
@@ -259,10 +277,10 @@ export function startSerpentina(
     drawFruit();
     drawSnake();
     if (state === "paused") {
-      drawOverlay("PAUSA", "#00f5ff", "P O ESC PARA CONTINUAR");
+      drawOverlay("PAUSA", pal.pause, "P O ESC PARA CONTINUAR");
     } else if (state === "gameover") {
-      if (won) drawOverlay("¡TABLERO COMPLETO!", "#00ff88");
-      else drawOverlay("GAME OVER", "#ff006e");
+      if (won) drawOverlay("¡TABLERO COMPLETO!", pal.win);
+      else drawOverlay("GAME OVER", pal.lose);
     }
   }
   // ── Entrada ──
@@ -328,6 +346,10 @@ export function startSerpentina(
   };
   image.src = FRUIT_IMAGE_URL;
   return {
+    setSkin(skin) {
+      pal = SERPENTINA_PALETTES[skin];
+      if (!destroyed) draw();
+    },
     destroy() {
       destroyed = true;
       image.onload = null;
