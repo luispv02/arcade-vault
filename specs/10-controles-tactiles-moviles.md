@@ -1,6 +1,6 @@
 # SPEC 10 — Controles táctiles y layout móvil de los juegos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05, SPEC 07, SPEC 08, SPEC 09
 > **Fecha:** 2026-11-04
 > **Objetivo:** Hacer jugables en un móvil táctil los 4 juegos con motor real (Asteroides, Tetris, Arkanoid y Serpentina) con un layout vertical —HUD compacto de una fila, canvas arriba y mando virtual (cruceta + 2 botones) debajo—, sin cambiar la jugabilidad ni el control por teclado.

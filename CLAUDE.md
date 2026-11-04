@@ -39,6 +39,8 @@ Subagentes del proyecto en `.claude/agents/` (se invocan con `@nombre`):
 
 - `@skin-designer <game-id>` (`.claude/agents/skin-designer.md`) — aplica las 3 skins (`neon`, `retro`, `clasico`, todas legibles en modo oscuro) **solo al juego indicado**, uno por invocación; sin id solo muestra la cobertura. Solo cambia apariencia, nunca jugabilidad. Su memoria es `references/game-with-themes.md`. Si falta la infraestructura de skins, propone una spec con `/spec` antes de implementar.
 
+- `@mobile-porter <game-id|ruta>` (`.claude/agents/mobile-porter.md`) — audita **un** juego o **una** página en escritorio y navegador móvil (375/390 px, `pointer: coarse`) tomando como estándar `specs/10-controles-tactiles-moviles.md`, con Playwright. Solo audita: no edita código; reporta hallazgos (🔴/🟡/🟢) con evidencia. Su memoria es `references/mobile-coverage.md`. Sin argumento solo muestra la cobertura. Necesita `npm run dev` levantado.
+
 ## Hooks y MCP
 
 - `.claude/settings.json` tiene un hook `PostToolUse` (Write/Edit) → `.claude/hooks/format-and-lint.sh`: **borra todas las líneas en blanco** de archivos JS/TS/CSS, aplica Prettier y `eslint --fix`; si ESLint falla, bloquea con el error. No luches contra él (no reinsertes líneas en blanco).
