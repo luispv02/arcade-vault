@@ -1,4 +1,5 @@
 import { DEFAULT_SKIN, SERPENTINA_PALETTES, type Skin } from "@/lib/skins";
+import type { TouchAction } from "@/lib/games/touch";
 import { FRUITS, FRUIT_NAMES, type FruitName } from "./sprites";
 import {
   CELL,
@@ -31,6 +32,9 @@ export interface SerpentinaSnapshot {
 }
 export interface SerpentinaGame {
   setSkin(skin: Skin): void;
+  /** Entrada del mando virtual (SPEC 10): solo `down: true` actúa; a/b no tienen efecto. */
+  input(action: TouchAction, down: boolean): void;
+  togglePause(): void;
   destroy(): void;
 }
 interface Fruit {
@@ -294,6 +298,12 @@ export function startSerpentina(
     ArrowRight: "right",
     KeyD: "right",
   };
+  const TOUCH_TO_DIRECTION: Partial<Record<TouchAction, Direction>> = {
+    up: "up",
+    down: "down",
+    left: "left",
+    right: "right",
+  };
   function onKeyDown(e: KeyboardEvent) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const turn = KEY_TO_DIRECTION[e.code];
@@ -349,6 +359,14 @@ export function startSerpentina(
     setSkin(skin) {
       pal = SERPENTINA_PALETTES[skin];
       if (!destroyed) draw();
+    },
+    input(action, down) {
+      if (destroyed || !down) return;
+      const turn = TOUCH_TO_DIRECTION[action];
+      if (turn) queueTurn(turn);
+    },
+    togglePause() {
+      if (!destroyed) togglePause();
     },
     destroy() {
       destroyed = true;
