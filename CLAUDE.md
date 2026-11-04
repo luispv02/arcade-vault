@@ -37,6 +37,8 @@ Subagentes del proyecto en `.claude/agents/` (se invocan con `@nombre`):
 
 - `@game-jam <tema>` (`.claude/agents/game-jam.md`) — recibe un tema, diseña un juego original y escribe ≥2 specs completas en `specs/game-jam/<game-id>/` (`01-motor-y-reglas.md`, `02-player-y-leaderboard.md` y, si aporta, una 03), en formato SPEC 07–09 y estado Borrador. Decide solo y registra sus decisiones en cada spec. No escribe código ni toca nada fuera de esa carpeta. Flujo: `@game-jam` → revisar/aprobar → numerar en `specs/NN-…` → `/spec-impl`.
 
+- `@skin-designer <game-id>` (`.claude/agents/skin-designer.md`) — aplica las 3 skins (`neon`, `retro`, `clasico`, todas legibles en modo oscuro) **solo al juego indicado**, uno por invocación; sin id solo muestra la cobertura. Solo cambia apariencia, nunca jugabilidad. Su memoria es `references/game-with-themes.md`. Si falta la infraestructura de skins, propone una spec con `/spec` antes de implementar.
+
 ## Hooks y MCP
 
 - `.claude/settings.json` tiene un hook `PostToolUse` (Write/Edit) → `.claude/hooks/format-and-lint.sh`: **borra todas las líneas en blanco** de archivos JS/TS/CSS, aplica Prettier y `eslint --fix`; si ESLint falla, bloquea con el error. No luches contra él (no reinsertes líneas en blanco).
