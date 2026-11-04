@@ -35,6 +35,8 @@ Subagentes del proyecto en `.claude/agents/` (se invocan con `@nombre`):
 
 - `@game-planner` (`.claude/agents/game-planner.md`) — investiga (research web) y propone qué juego añadir al catálogo. Puntúa cada candidato /15 según diversidad de categorías, factibilidad en canvas 2D y reconocimiento clásico. No escribe código ni specs. Su memoria es el To-Do `references/game-suggestions-todo.md`, que crea y actualiza él mismo (pendientes, aceptados, implementados, descartados e historial) para no repetir sugerencias. Flujo: `@game-planner` → `/add-game` → `/spec-impl`. Al aceptar o descartar una sugerencia, díselo para que actualice el To-Do.
 
+- `@game-jam <tema>` (`.claude/agents/game-jam.md`) — recibe un tema, diseña un juego original y escribe ≥2 specs completas en `specs/game-jam/<game-id>/` (`01-motor-y-reglas.md`, `02-player-y-leaderboard.md` y, si aporta, una 03), en formato SPEC 07–09 y estado Borrador. Decide solo y registra sus decisiones en cada spec. No escribe código ni toca nada fuera de esa carpeta. Flujo: `@game-jam` → revisar/aprobar → numerar en `specs/NN-…` → `/spec-impl`.
+
 ## Hooks y MCP
 
 - `.claude/settings.json` tiene un hook `PostToolUse` (Write/Edit) → `.claude/hooks/format-and-lint.sh`: **borra todas las líneas en blanco** de archivos JS/TS/CSS, aplica Prettier y `eslint --fix`; si ESLint falla, bloquea con el error. No luches contra él (no reinsertes líneas en blanco).
