@@ -22,7 +22,7 @@ export function MobileHudMenu({ exitHref }: { exitHref: string }) {
       <button
         type="button"
         className="btn ghost hud-menu-btn"
-        aria-label="Menú"
+        aria-label="Opciones del juego"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
