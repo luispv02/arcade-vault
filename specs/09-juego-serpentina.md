@@ -1,6 +1,6 @@
 # SPEC 09 — Juego Serpentina (Snake) con leaderboard
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05, SPEC 06
 > **Fecha:** 2026-11-03
 > **Objetivo:** Crear desde cero el juego de la serpiente como el juego `serpentina` del catálogo, jugable en `/juegos/serpentina/jugar`, con frutas dibujadas desde el spritesheet `fruits.png`, que al chocar permite guardar la puntuación en `scores` con el modal «FIN DEL JUEGO» común.

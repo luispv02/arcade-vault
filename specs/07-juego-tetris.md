@@ -1,6 +1,6 @@
 # SPEC 07 — Juego Tetris con leaderboard
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05, SPEC 06
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a TypeScript el juego `references/templates/started-games/03-tetris/` como el juego `tetris` del catálogo, jugable en `/juegos/tetris/jugar`, que al terminar la partida permite guardar la puntuación en `scores` mediante un modal «FIN DEL JUEGO» común extraído de Asteroides.

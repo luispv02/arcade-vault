@@ -1,6 +1,6 @@
 # SPEC 02 — Home (landing page) de Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-11-02
 > **Objetivo:** Portar a Next.js la pantalla Home del template `references/templates/home-about/home.jsx` en `/`, moviendo la Biblioteca a `/games` y añadiendo "Inicio" a la navegación.

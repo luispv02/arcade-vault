@@ -1,6 +1,6 @@
 # SPEC 08 — Juego Arkanoid con leaderboard
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05, SPEC 06, SPEC 07
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a TypeScript el juego `references/templates/started-games/04-arkanoid/` como el juego `arkanoid` del catálogo, jugable en `/juegos/arkanoid/jugar`, que al terminar la partida (por perder las 3 vidas o por limpiar los 5 niveles) permite guardar la puntuación en `scores` con el modal «FIN DEL JUEGO» común.
