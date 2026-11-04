@@ -3225,3 +3225,102 @@ a {
     transform: none;
   }
 }
+
+/* ===== Skins (data-skin en .av-player). neon = estilo base; solo apariencia. ===== */
+.skin-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+.skin-select select {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  color-scheme: dark;
+  cursor: pointer;
+}
+.skin-select select:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.av-player[data-skin="retro"] {
+  --bg: #0f380f;
+  --bg-2: #0f380f;
+  --bg-3: #0f380f;
+  --ink: #9bbc0f;
+  --ink-dim: #8bac0f;
+  --ink-faint: #8bac0f;
+  --cyan: #9bbc0f;
+  --magenta: #9bbc0f;
+  --yellow: #9bbc0f;
+  --green: #9bbc0f;
+  --line: #306230;
+}
+.av-player[data-skin="clasico"] {
+  --bg: #000;
+  --bg-2: #000;
+  --bg-3: #000;
+  --ink: #fff;
+  --ink-dim: #c8c8c8;
+  --ink-faint: #a0a0a0;
+  --cyan: #fff;
+  --magenta: #ff3b30;
+  --yellow: #ffd400;
+  --green: #fff;
+  --line: #555;
+}
+.av-player[data-skin="retro"] *,
+.av-player[data-skin="clasico"] * {
+  text-shadow: none !important;
+}
+.av-player[data-skin="retro"] .crt,
+.av-player[data-skin="clasico"] .crt {
+  box-shadow: 0 0 0 4px #306230;
+  border-radius: 0;
+}
+.av-player[data-skin="clasico"] .crt {
+  background: #000;
+  box-shadow: 0 0 0 2px #555;
+}
+.av-player[data-skin="retro"] .crt {
+  background: #0f380f;
+}
+.av-player[data-skin="retro"] .crt::before,
+.av-player[data-skin="clasico"] .crt::before,
+.av-player[data-skin="retro"] .crt-screen::before,
+.av-player[data-skin="clasico"] .crt-screen::before,
+.av-player[data-skin="retro"] .crt-screen::after,
+.av-player[data-skin="clasico"] .crt-screen::after {
+  display: none;
+}
+.av-player[data-skin="retro"] .crt-screen,
+.av-player[data-skin="clasico"] .crt-screen {
+  border-radius: 0;
+  box-shadow: none;
+}
+.av-player[data-skin="retro"] .asteroids-canvas,
+.av-player[data-skin="retro"] .tetris-canvas,
+.av-player[data-skin="retro"] .arkanoid-canvas,
+.av-player[data-skin="retro"] .serpentina-canvas {
+  image-rendering: pixelated;
+}
+.av-player[data-skin="retro"] .modal,
+.av-player[data-skin="clasico"] .modal {
+  box-shadow: none;
+  background: var(--bg);
+}
+.av-player[data-skin="retro"] .modal::before,
+.av-player[data-skin="clasico"] .modal::before {
+  display: none;
+}
+.av-player[data-skin="retro"] .modal-bd,
+.av-player[data-skin="clasico"] .modal-bd {
+  background: rgba(0, 0, 0, 0.85);
+}

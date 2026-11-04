@@ -1,3 +1,4 @@
+import { ARKANOID_PALETTES, DEFAULT_SKIN, type Skin } from "@/lib/skins";
 import { LEVELS } from "./levels";
 import {
   EXPLOSION_DURATION,
@@ -41,6 +42,7 @@ export interface ArkanoidSnapshot {
   won: boolean; // true solo si el gameover llega por limpiar el último nivel
 }
 export interface ArkanoidGame {
+  setSkin(skin: Skin): void;
   destroy(): void;
 }
 interface Block {
@@ -63,7 +65,7 @@ interface Explosion {
 // del módulo), de modo que cada partida es independiente y `destroy()` la corta.
 export function startArkanoid(
   canvas: HTMLCanvasElement,
-  opts?: { onStateChange?: (s: ArkanoidSnapshot) => void },
+  opts?: { onStateChange?: (s: ArkanoidSnapshot) => void; skin?: Skin },
 ): ArkanoidGame {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
@@ -72,6 +74,8 @@ export function startArkanoid(
     );
   }
   const onStateChange = opts?.onStateChange;
+  let pal = ARKANOID_PALETTES[opts?.skin ?? DEFAULT_SKIN];
+  let started = false;
   // ── Assets ────────────────────────────────────────────────────────────────
   const sheet = new Image();
   const bounceSound = new Audio(BOUNCE_SOUND_URL);
@@ -229,9 +233,9 @@ export function startArkanoid(
   }
   // ── Dibujo ────────────────────────────────────────────────────────────────
   function drawOverlay(message: string): void {
-    ctx!.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx!.fillStyle = pal.overlay;
     ctx!.fillRect(0, 0, W, H);
-    ctx!.fillStyle = "#fff";
+    ctx!.fillStyle = pal.text;
     ctx!.font = "bold 64px monospace";
     ctx!.textAlign = "center";
     ctx!.textBaseline = "middle";
@@ -239,61 +243,64 @@ export function startArkanoid(
   }
   // Pausa: solo «PAUSA» y cómo reanudar (el selector de nivel del original se elimina).
   function drawPauseOverlay(): void {
-    ctx!.fillStyle = "rgba(0, 0, 0, 0.65)";
+    ctx!.fillStyle = pal.overlay;
     ctx!.fillRect(0, 0, W, H);
-    ctx!.fillStyle = "#fff";
+    ctx!.fillStyle = pal.text;
     ctx!.textAlign = "center";
     ctx!.textBaseline = "middle";
     ctx!.font = "bold 56px monospace";
     ctx!.fillText("PAUSA", W / 2, H / 2 - 20);
     ctx!.font = "bold 16px monospace";
-    ctx!.fillStyle = "rgba(255, 255, 255, 0.65)";
+    ctx!.fillStyle = pal.textDim;
     ctx!.fillText("P O ESC PARA CONTINUAR", W / 2, H / 2 + 28);
+  }
+  // Con skins planas (retro/clásico) los sprites se sustituyen por rectángulos.
+  function drawBall(x: number, y: number): void {
+    const c = ctx!;
+    if (pal.sprites) {
+      drawSprite(c, sheet, SPRITES.ball, x, y, BALL_SIZE, BALL_SIZE);
+    } else {
+      c.fillStyle = pal.ball;
+      c.fillRect(x, y, BALL_SIZE, BALL_SIZE);
+    }
   }
   function draw(): void {
     const c = ctx!;
-    c.fillStyle = "#000";
+    c.fillStyle = pal.bg;
     c.fillRect(0, 0, W, H);
     for (const block of blocks) {
       if (!block.alive) continue;
-      drawSprite(
-        c,
-        sheet,
-        SPRITES.blocks[block.color],
-        block.x,
-        block.y,
-        block.w,
-        block.h,
-      );
+      if (pal.sprites) {
+        drawSprite(c, sheet, SPRITES.blocks[block.color], block.x, block.y, block.w, block.h);
+      } else {
+        c.fillStyle = pal.blocks[block.color];
+        c.fillRect(block.x + 1, block.y + 1, block.w - 2, block.h - 2);
+      }
     }
     for (const exp of explosions) {
       const frame = Math.min(
         Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4),
         3,
       );
-      drawSprite(
-        c,
-        sheet,
-        EXPLOSION_FRAMES[exp.color][frame],
-        exp.x,
-        exp.y,
-        exp.w,
-        exp.h,
-      );
+      if (pal.sprites) {
+        drawSprite(c, sheet, EXPLOSION_FRAMES[exp.color][frame], exp.x, exp.y, exp.w, exp.h);
+      } else {
+        // Sin degradados: el bloque se encoge en cuatro pasos.
+        const inset = (frame + 1) * 3;
+        c.fillStyle = pal.blocks[exp.color];
+        c.fillRect(exp.x + inset, exp.y + inset / 2, exp.w - inset * 2, exp.h - inset);
+      }
     }
-    drawSprite(
-      c,
-      sheet,
-      SPRITES.paddle,
-      paddle.x,
-      paddle.y,
-      paddle.w,
-      paddle.h,
-    );
-    drawSprite(c, sheet, SPRITES.ball, ball.x, ball.y, ball.w, ball.h);
+    if (pal.sprites) {
+      drawSprite(c, sheet, SPRITES.paddle, paddle.x, paddle.y, paddle.w, paddle.h);
+    } else {
+      c.fillStyle = pal.paddle;
+      c.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+    }
+    drawBall(ball.x, ball.y);
     // HUD del canvas: solo mientras se juega, como en el original.
     if (!gameOver) {
-      c.fillStyle = "#fff";
+      c.fillStyle = pal.text;
       c.font = "bold 18px monospace";
       c.textBaseline = "top";
       c.textAlign = "left";
@@ -303,7 +310,7 @@ export function startArkanoid(
       const spacing = 4;
       for (let i = 0; i < lives; i++) {
         const bx = W - 10 - (lives - i) * (BALL_SIZE + spacing);
-        drawSprite(c, sheet, SPRITES.ball, bx, 10, BALL_SIZE, BALL_SIZE);
+        drawBall(bx, 10);
       }
     }
     if (gameOver) drawOverlay(won ? "¡Completaste el juego!" : "GAME OVER");
@@ -372,6 +379,7 @@ export function startArkanoid(
   // antes, no se arranca nada (ni bucle ni listeners).
   function begin(): void {
     if (destroyed) return;
+    started = true;
     initPaddle();
     loadLevel(1);
     notify();
@@ -386,6 +394,11 @@ export function startArkanoid(
   sheet.onload = begin;
   sheet.src = SPRITESHEET_URL;
   return {
+    setSkin(skin) {
+      pal = ARKANOID_PALETTES[skin];
+      // En pausa o fin de partida el bucle no corre: se redibuja a mano.
+      if (started && !destroyed && (paused || gameOver)) draw();
+    },
     destroy() {
       destroyed = true;
       sheet.onload = null;

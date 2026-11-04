@@ -7,6 +7,11 @@ import {
   type Keys,
 } from "./entities";
 import {
+  ASTEROIDS_PALETTES,
+  DEFAULT_SKIN,
+  type Skin,
+} from "@/lib/skins";
+import {
   H,
   POINTS,
   POWERUP_DROP_CHANCE,
@@ -24,6 +29,7 @@ export interface AsteroidsSnapshot {
 }
 
 export interface AsteroidsGame {
+  setSkin(skin: Skin): void;
   destroy(): void;
 }
 
@@ -37,13 +43,14 @@ const PREVENT_DEFAULT_CODES = new Set([
 
 export function startAsteroids(
   canvas: HTMLCanvasElement,
-  opts?: { onStateChange?: (s: AsteroidsSnapshot) => void },
+  opts?: { onStateChange?: (s: AsteroidsSnapshot) => void; skin?: Skin },
 ): AsteroidsGame {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("startAsteroids: no se pudo obtener el contexto 2D del canvas");
   }
   const onStateChange = opts?.onStateChange;
+  let pal = ASTEROIDS_PALETTES[opts?.skin ?? DEFAULT_SKIN];
 
   // ── Input ─────────────────────────────────────────────────────────────────
   const keys: Keys = {};
@@ -238,9 +245,9 @@ export function startAsteroids(
     c.save();
     c.translate(x, y);
     c.rotate(-Math.PI / 2);
-    c.strokeStyle = "#fff";
-    c.lineWidth = 1.2;
-    c.lineJoin = "round";
+    c.strokeStyle = pal.ship;
+    c.lineWidth = Math.min(pal.lineWidth, 2);
+    c.lineJoin = pal.pixel ? "miter" : "round";
     c.beginPath();
     c.moveTo(9, 0);
     c.lineTo(-6, -5);
@@ -252,8 +259,8 @@ export function startAsteroids(
   }
 
   function drawHUD(c: CanvasRenderingContext2D): void {
-    c.fillStyle = "#fff";
-    c.font = "15px monospace";
+    c.fillStyle = pal.text;
+    c.font = `15px ${pal.font}`;
 
     c.textAlign = "left";
     c.fillText(`SCORE  ${score}`, 14, 26);
@@ -265,30 +272,30 @@ export function startAsteroids(
 
     if (ship.tripleShot > 0) {
       c.textAlign = "left";
-      c.fillStyle = "#0ff";
+      c.fillStyle = pal.powerUp;
       c.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
     }
   }
 
   function drawOverlay(c: CanvasRenderingContext2D, title: string, sub: string) {
     c.textAlign = "center";
-    c.fillStyle = "#fff";
+    c.fillStyle = pal.text;
     c.font = "bold 46px monospace";
     c.fillText(title, W / 2, H / 2 - 18);
     c.font = "18px monospace";
-    c.fillStyle = "rgba(255,255,255,0.65)";
+    c.fillStyle = pal.textDim;
     c.fillText(sub, W / 2, H / 2 + 22);
   }
 
   function draw(c: CanvasRenderingContext2D): void {
-    c.fillStyle = "#000";
+    c.fillStyle = pal.bg;
     c.fillRect(0, 0, W, H);
 
-    particles.forEach((p) => p.draw(c));
-    asteroids.forEach((a) => a.draw(c));
-    powerUps.forEach((p) => p.draw(c));
-    bullets.forEach((b) => b.draw(c));
-    ship.draw(c);
+    particles.forEach((p) => p.draw(c, pal));
+    asteroids.forEach((a) => a.draw(c, pal));
+    powerUps.forEach((p) => p.draw(c, pal));
+    bullets.forEach((b) => b.draw(c, pal));
+    ship.draw(c, pal);
 
     drawHUD(c);
 
@@ -326,6 +333,9 @@ export function startAsteroids(
   rafId = requestAnimationFrame(loop);
 
   return {
+    setSkin(skin) {
+      pal = ASTEROIDS_PALETTES[skin];
+    },
     destroy() {
       destroyed = true;
       cancelAnimationFrame(rafId);

@@ -29,6 +29,16 @@ Usa siempre `/frontend-design` para diseñar la interfaz de usuario. Los diseño
 
 Convención de commits: `feat: …` en español; cada spec se entrega en una PR desde su rama `spec-NN-slug`.
 
+## Agentes
+
+Subagentes del proyecto en `.claude/agents/` (se invocan con `@nombre`):
+
+- `@game-planner` (`.claude/agents/game-planner.md`) — investiga (research web) y propone qué juego añadir al catálogo. Puntúa cada candidato /15 según diversidad de categorías, factibilidad en canvas 2D y reconocimiento clásico. No escribe código ni specs. Su memoria es el To-Do `references/game-suggestions-todo.md`, que crea y actualiza él mismo (pendientes, aceptados, implementados, descartados e historial) para no repetir sugerencias. Flujo: `@game-planner` → `/add-game` → `/spec-impl`. Al aceptar o descartar una sugerencia, díselo para que actualice el To-Do.
+
+- `@game-jam <tema>` (`.claude/agents/game-jam.md`) — recibe un tema, diseña un juego original y escribe ≥2 specs completas en `specs/game-jam/<game-id>/` (`01-motor-y-reglas.md`, `02-player-y-leaderboard.md` y, si aporta, una 03), en formato SPEC 07–09 y estado Borrador. Decide solo y registra sus decisiones en cada spec. No escribe código ni toca nada fuera de esa carpeta. Flujo: `@game-jam` → revisar/aprobar → numerar en `specs/NN-…` → `/spec-impl`.
+
+- `@skin-designer <game-id>` (`.claude/agents/skin-designer.md`) — aplica las 3 skins (`neon`, `retro`, `clasico`, todas legibles en modo oscuro) **solo al juego indicado**, uno por invocación; sin id solo muestra la cobertura. Solo cambia apariencia, nunca jugabilidad. Su memoria es `references/game-with-themes.md`. Si falta la infraestructura de skins, propone una spec con `/spec` antes de implementar.
+
 ## Hooks y MCP
 
 - `.claude/settings.json` tiene un hook `PostToolUse` (Write/Edit) → `.claude/hooks/format-and-lint.sh`: **borra todas las líneas en blanco** de archivos JS/TS/CSS, aplica Prettier y `eslint --fix`; si ESLint falla, bloquea con el error. No luches contra él (no reinsertes líneas en blanco).
@@ -47,16 +57,16 @@ Next.js 16.4.4 con React 19.3: más reciente que los datos de entrenamiento habi
 
 ### Rutas
 
-| Ruta                 | Contenido                                                                         |
-| -------------------- | --------------------------------------------------------------------------------- |
-| `/`                  | Landing (`components/home/*`, datos estáticos en `lib/home.ts`)                   |
-| `/games`             | Biblioteca/catálogo (`components/library.tsx`) / (`references implemented-games.md`)                                  |
-| `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                           |
-| `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer` |
-| `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                    |
-| `/acceso`            | "Login" local (solo nombre)                                                       |
-| `/about`             | Acerca de + formulario de contacto                                                |
-| `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                          |
+| Ruta                 | Contenido                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `/`                  | Landing (`components/home/*`, datos estáticos en `lib/home.ts`)                      |
+| `/games`             | Biblioteca/catálogo (`components/library.tsx`) / (`references implemented-games.md`) |
+| `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                              |
+| `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer`    |
+| `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                       |
+| `/acceso`            | "Login" local (solo nombre)                                                          |
+| `/about`             | Acerca de + formulario de contacto                                                   |
+| `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                             |
 
 ### Datos (Supabase)
 

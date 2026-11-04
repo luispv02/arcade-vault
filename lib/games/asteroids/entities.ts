@@ -1,3 +1,4 @@
+import type { AsteroidsPalette } from "@/lib/skins";
 import {
   H,
   POWERUP_TTL,
@@ -35,11 +36,19 @@ export class Bullet {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
+  draw(ctx: CanvasRenderingContext2D, p: AsteroidsPalette): void {
+    ctx.save();
+    ctx.fillStyle = p.bullet;
+    ctx.shadowColor = p.bullet;
+    ctx.shadowBlur = p.glow;
+    if (p.pixel) {
+      ctx.fillRect(this.x - 2, this.y - 2, 4, 4);
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 }
 
@@ -92,13 +101,15 @@ export class Asteroid {
     ];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, p: AsteroidsPalette): void {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1.5;
-    ctx.lineJoin = "round";
+    ctx.strokeStyle = p.asteroid;
+    ctx.shadowColor = p.asteroid;
+    ctx.shadowBlur = p.glow;
+    ctx.lineWidth = p.lineWidth;
+    ctx.lineJoin = p.pixel ? "miter" : "round";
     ctx.beginPath();
     ctx.moveTo(this.verts[0][0], this.verts[0][1]);
     for (let i = 1; i < this.verts.length; i++)
@@ -135,19 +146,21 @@ export class PowerUp {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, p: AsteroidsPalette): void {
     if (this.ttl < 2 && Math.floor(this.ttl * 8) % 2 === 0) return;
     const pulse = 0.85 + Math.sin(performance.now() / 150) * 0.15;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = p.powerUp;
+    ctx.shadowColor = p.powerUp;
+    ctx.shadowBlur = p.glow;
+    ctx.lineWidth = Math.max(2, p.lineWidth);
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
     ctx.restore();
-    ctx.fillStyle = "#0ff";
-    ctx.font = "bold 12px monospace";
+    ctx.fillStyle = p.powerUp;
+    ctx.font = `bold 12px ${p.font.replace("bold ", "")}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("3x", this.x, this.y);
@@ -182,14 +195,25 @@ export class Particle {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, p: AsteroidsPalette): void {
     const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+    if (p.pixel) {
+      // Sin degradado: píxel sólido que desaparece al final de su vida.
+      if (alpha < 0.3) return;
+      ctx.fillStyle = `rgb(${p.particle})`;
+      ctx.fillRect(Math.round(this.x), Math.round(this.y), 3, 3);
+      return;
+    }
+    ctx.save();
+    ctx.strokeStyle = `rgba(${p.particle},${alpha.toFixed(2)})`;
+    ctx.shadowColor = `rgb(${p.particle})`;
+    ctx.shadowBlur = p.glow;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
     ctx.lineTo(this.x - this.vx * 0.05, this.y - this.vy * 0.05);
     ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -263,7 +287,7 @@ export class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, p: AsteroidsPalette): void {
     if (this.dead) return;
     // Parpadeo durante invencibilidad de reaparición
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0)
@@ -272,9 +296,11 @@ export class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1.5;
-    ctx.lineJoin = "round";
+    ctx.strokeStyle = p.ship;
+    ctx.shadowColor = p.ship;
+    ctx.shadowBlur = p.glow;
+    ctx.lineWidth = p.lineWidth;
+    ctx.lineJoin = p.pixel ? "miter" : "round";
 
     // Silueta clásica: triángulo con muesca trasera
     ctx.beginPath();
@@ -291,7 +317,8 @@ export class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = p.flame;
+      ctx.shadowColor = p.flame;
       ctx.stroke();
     }
 

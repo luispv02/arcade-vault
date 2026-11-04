@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { GameOverModal } from "@/components/game-over-modal";
+import { SkinSelect, useSkin } from "@/components/skin-select";
+import { getSkinSnapshot } from "@/lib/skins";
 import {
   startSerpentina,
   type SerpentinaSnapshot,
@@ -22,20 +24,33 @@ export function SerpentinaPlayer() {
   const [snap, setSnap] = useState<SerpentinaSnapshot>(INITIAL);
   // Cambiar `run` destruye el motor y arranca una partida nueva (JUGAR DE NUEVO).
   const [run, setRun] = useState(0);
+  const skin = useSkin();
+  const gameRef = useRef<ReturnType<typeof startSerpentina> | null>(null);
   const sessionName = user?.name ?? "INVITADO";
   const gameOver = snap.state === "gameover";
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const game = startSerpentina(canvas, { onStateChange: setSnap });
-    return () => game.destroy();
+    const game = startSerpentina(canvas, {
+      onStateChange: setSnap,
+      skin: getSkinSnapshot(),
+    });
+    gameRef.current = game;
+    return () => {
+      game.destroy();
+      gameRef.current = null;
+    };
   }, [run]);
+  // Cambiar de skin no reinicia la partida: solo cambia la paleta del motor.
+  useEffect(() => {
+    gameRef.current?.setSkin(skin);
+  }, [skin]);
   const playAgain = () => {
     setSnap(INITIAL);
     setRun((r) => r + 1);
   };
   return (
-    <div className="av-player fade-in">
+    <div className="av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -60,6 +75,7 @@ export function SerpentinaPlayer() {
           </div>
         </div>
         <div className="hud-actions">
+          <SkinSelect />
           <Link href="/juegos/serpentina" className="btn ghost">
             SALIR
           </Link>

@@ -1,8 +1,7 @@
+import { DEFAULT_SKIN, TETRIS_PALETTES, type Skin } from "@/lib/skins";
 import {
   BLOCK,
-  COLORS,
   COLS,
-  GRID_COLOR,
   H,
   LINE_SCORES,
   ROWS,
@@ -20,6 +19,7 @@ export interface TetrisSnapshot {
   state: "playing" | "paused" | "gameover";
 }
 export interface TetrisGame {
+  setSkin(skin: Skin): void;
   destroy(): void;
 }
 // Teclas cuyo comportamiento por defecto (scroll de la página) hay que anular.
@@ -41,7 +41,7 @@ const NEXT_SIZE = 4 * BLOCK;
 // del módulo), de modo que cada partida es independiente y `destroy()` la corta.
 export function startTetris(
   canvas: HTMLCanvasElement,
-  opts?: { onStateChange?: (s: TetrisSnapshot) => void },
+  opts?: { onStateChange?: (s: TetrisSnapshot) => void; skin?: Skin },
 ): TetrisGame {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
@@ -51,6 +51,7 @@ export function startTetris(
   }
   const c: CanvasRenderingContext2D = ctx;
   const onStateChange = opts?.onStateChange;
+  let pal = TETRIS_PALETTES[opts?.skin ?? DEFAULT_SKIN];
   const board = createBoard();
   let current: Piece;
   let next: Piece = randomPiece();
@@ -170,12 +171,24 @@ export function startTetris(
     alpha = 1,
   ): void {
     if (!colorIndex) return;
+    const color = pal.colors[colorIndex];
+    c.save();
     c.globalAlpha = alpha;
-    c.fillStyle = COLORS[colorIndex] as string;
+    c.fillStyle = color;
+    c.shadowColor = color;
+    c.shadowBlur = pal.glow;
     c.fillRect(px + 1, py + 1, BLOCK - 2, BLOCK - 2);
-    c.fillStyle = "rgba(255,255,255,0.12)";
-    c.fillRect(px + 1, py + 1, BLOCK - 2, 4);
-    c.globalAlpha = 1;
+    c.shadowBlur = 0;
+    if (pal.gloss) {
+      c.fillStyle = "rgba(255,255,255,0.12)";
+      c.fillRect(px + 1, py + 1, BLOCK - 2, 4);
+    }
+    if (pal.hollow && colorIndex % 2 === 0) {
+      // Hueco central: distingue las piezas pares sin depender del color.
+      c.fillStyle = pal.boardBg;
+      c.fillRect(px + 9, py + 9, BLOCK - 18, BLOCK - 18);
+    }
+    c.restore();
   }
   function drawShape(shape: Shape, gx: number, gy: number, alpha = 1): void {
     for (let r = 0; r < shape.length; r++)
@@ -183,7 +196,7 @@ export function startTetris(
         drawBlock((gx + col) * BLOCK, (gy + r) * BLOCK, shape[r][col], alpha);
   }
   function drawGrid(): void {
-    c.strokeStyle = GRID_COLOR;
+    c.strokeStyle = pal.grid;
     c.lineWidth = 0.5;
     for (let col = 1; col < COLS; col++) {
       c.beginPath();
@@ -200,14 +213,14 @@ export function startTetris(
   }
   // Panel derecho: recuadro NEXT con la pieza siguiente centrada en su 4×4.
   function drawNext(): void {
-    c.fillStyle = "#8a8fb5";
+    c.fillStyle = pal.textDim;
     c.font = "bold 15px monospace";
     c.textAlign = "left";
     c.textBaseline = "alphabetic";
     c.fillText("NEXT", NEXT_X, NEXT_Y - 14);
-    c.fillStyle = "#0f0f18";
+    c.fillStyle = pal.boardBg;
     c.fillRect(NEXT_X, NEXT_Y, NEXT_SIZE, NEXT_SIZE);
-    c.strokeStyle = GRID_COLOR;
+    c.strokeStyle = pal.grid;
     c.lineWidth = 1;
     c.strokeRect(NEXT_X + 0.5, NEXT_Y + 0.5, NEXT_SIZE - 1, NEXT_SIZE - 1);
     const shape = next.shape;
@@ -222,23 +235,23 @@ export function startTetris(
         );
   }
   function drawPause(): void {
-    c.fillStyle = "rgba(0,0,0,0.65)";
+    c.fillStyle = pal.overlay;
     c.fillRect(0, 0, COLS * BLOCK, ROWS * BLOCK);
-    c.fillStyle = "#fff";
+    c.fillStyle = pal.text;
     c.textAlign = "center";
     c.font = "bold 40px monospace";
     c.fillText("PAUSA", (COLS * BLOCK) / 2, (ROWS * BLOCK) / 2 - 8);
     c.font = "15px monospace";
-    c.fillStyle = "rgba(255,255,255,0.65)";
+    c.fillStyle = pal.textDim;
     c.fillText("P PARA CONTINUAR", (COLS * BLOCK) / 2, (ROWS * BLOCK) / 2 + 26);
     c.textAlign = "left";
   }
   function draw(): void {
     c.clearRect(0, 0, W, H);
-    c.fillStyle = "#0a0a0f";
+    c.fillStyle = pal.bg;
     c.fillRect(0, 0, W, H);
     // tablero
-    c.fillStyle = "#0f0f18";
+    c.fillStyle = pal.boardBg;
     c.fillRect(0, 0, COLS * BLOCK, ROWS * BLOCK);
     drawGrid();
     for (let r = 0; r < ROWS; r++)
@@ -248,7 +261,7 @@ export function startTetris(
     drawShape(current.shape, current.x, ghostY(), 0.2);
     drawShape(current.shape, current.x, current.y);
     // separación con el panel
-    c.strokeStyle = GRID_COLOR;
+    c.strokeStyle = pal.grid;
     c.lineWidth = 1;
     c.beginPath();
     c.moveTo(PANEL_X + 0.5, 0);
@@ -326,6 +339,11 @@ export function startTetris(
   window.addEventListener("keydown", onKeyDown);
   rafId = requestAnimationFrame(loop);
   return {
+    setSkin(skin) {
+      pal = TETRIS_PALETTES[skin];
+      // En pausa o fin de partida el bucle no corre: se redibuja a mano.
+      if (!destroyed && (paused || gameOver)) draw();
+    },
     destroy() {
       destroyed = true;
       cancelAnimationFrame(rafId);
