@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { GameOverModal } from "@/components/game-over-modal";
+import { MobileHudMenu } from "@/components/mobile-hud-menu";
 import { SkinSelect, useSkin } from "@/components/skin-select";
+import { TouchPad } from "@/components/touch-pad";
+import type { TouchAction } from "@/lib/games/touch";
 import { getSkinSnapshot } from "@/lib/skins";
 import { startTetris, type TetrisSnapshot } from "@/lib/games/tetris/game";
 const INITIAL: TetrisSnapshot = {
@@ -12,6 +15,10 @@ const INITIAL: TetrisSnapshot = {
   level: 1,
   state: "playing",
 };
+// Mando táctil: A rota, B suelta la pieza; mover y bajar repiten al mantener pulsado.
+const PAD_BUTTONS = { a: "ROTAR", b: "CAER" };
+const PAD_REPEAT: TouchAction[] = ["left", "right", "down"];
+const PAD_DIRECTIONS: TouchAction[] = ["up", "left", "right", "down"];
 // Juego real: el motor (lib/games/tetris) dibuja en el canvas y avisa a React
 // solo cuando cambian puntos, líneas, nivel o estado. React nunca controla el juego.
 export function TetrisPlayer() {
@@ -41,6 +48,9 @@ export function TetrisPlayer() {
   useEffect(() => {
     gameRef.current?.setSkin(skin);
   }, [skin]);
+  const onTouchInput = useCallback((action: TouchAction, down: boolean) => {
+    gameRef.current?.input(action, down);
+  }, []);
   const playAgain = () => {
     setSnap(INITIAL);
     setRun((r) => r + 1);
@@ -49,7 +59,7 @@ export function TetrisPlayer() {
     <div className="av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
+          <div className="hud-stat hud-secondary">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
               {sessionName}
@@ -59,7 +69,7 @@ export function TetrisPlayer() {
             <div className="l">Puntuación</div>
             <div className="v">{snap.score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat lives">
+          <div className="hud-stat lives hud-secondary">
             <div className="l">Líneas</div>
             <div className="v">{snap.lines}</div>
           </div>
@@ -69,10 +79,20 @@ export function TetrisPlayer() {
           </div>
         </div>
         <div className="hud-actions">
-          <SkinSelect />
-          <Link href="/juegos/tetris" className="btn ghost">
-            SALIR
-          </Link>
+          <button
+            type="button"
+            className="btn ghost hud-mobile-only"
+            onClick={() => gameRef.current?.togglePause()}
+          >
+            {snap.state === "paused" ? "REANUDAR" : "PAUSA"}
+          </button>
+          <MobileHudMenu exitHref="/juegos/tetris" />
+          <div className="hud-desktop-only" style={{ display: "contents" }}>
+            <SkinSelect />
+            <Link href="/juegos/tetris" className="btn ghost">
+              SALIR
+            </Link>
+          </div>
         </div>
       </div>
       <div className="crt">
@@ -91,6 +111,12 @@ export function TetrisPlayer() {
           <span>← → MOVER · ↑ X ROTAR · ↓ BAJAR · ESPACIO CAE · P PAUSA</span>
         </div>
       </div>
+      <TouchPad
+        onInput={onTouchInput}
+        buttons={PAD_BUTTONS}
+        repeat={PAD_REPEAT}
+        directions={PAD_DIRECTIONS}
+      />
       {gameOver && (
         <GameOverModal
           gameId="tetris"

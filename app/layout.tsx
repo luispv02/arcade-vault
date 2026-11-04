@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Press_Start_2P, JetBrains_Mono, Courier_Prime } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/session-provider";
@@ -27,6 +27,13 @@ const courierPrime = Courier_Prime({
 export const metadata: Metadata = {
   title: "Arcade Vault",
   description: "Juega online y compite por la mayor cantidad de puntos.",
+};
+
+// SPEC 10: viewport explícito para móvil; `cover` deja usar el área segura (safe-area) bajo el mando.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

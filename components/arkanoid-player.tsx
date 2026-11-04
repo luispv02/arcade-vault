@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { GameOverModal } from "@/components/game-over-modal";
+import { MobileHudMenu } from "@/components/mobile-hud-menu";
 import { SkinSelect, useSkin } from "@/components/skin-select";
+import { TouchPad } from "@/components/touch-pad";
+import type { TouchAction } from "@/lib/games/touch";
 import { getSkinSnapshot } from "@/lib/skins";
 import {
   startArkanoid,
@@ -16,6 +19,8 @@ const INITIAL: ArkanoidSnapshot = {
   state: "playing",
   won: false,
 };
+// Mando táctil: solo mueve la pala (← →); sin botones A/B.
+const PAD_DIRECTIONS: TouchAction[] = ["left", "right"];
 // Juego real: el motor (lib/games/arkanoid) dibuja en el canvas y avisa a React
 // solo cuando cambian puntos, vidas, nivel o estado. React nunca controla el juego.
 export function ArkanoidPlayer() {
@@ -45,6 +50,9 @@ export function ArkanoidPlayer() {
   useEffect(() => {
     gameRef.current?.setSkin(skin);
   }, [skin]);
+  const onTouchInput = useCallback((action: TouchAction, down: boolean) => {
+    gameRef.current?.input(action, down);
+  }, []);
   const playAgain = () => {
     setSnap(INITIAL);
     setRun((r) => r + 1);
@@ -53,7 +61,7 @@ export function ArkanoidPlayer() {
     <div className="av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
+          <div className="hud-stat hud-secondary">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
               {sessionName}
@@ -63,7 +71,7 @@ export function ArkanoidPlayer() {
             <div className="l">Puntuación</div>
             <div className="v">{snap.score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat lives">
+          <div className="hud-stat lives hud-secondary">
             <div className="l">Vidas</div>
             <div className="v">{"♥ ".repeat(snap.lives).trim() || "—"}</div>
           </div>
@@ -73,10 +81,20 @@ export function ArkanoidPlayer() {
           </div>
         </div>
         <div className="hud-actions">
-          <SkinSelect />
-          <Link href="/juegos/arkanoid" className="btn ghost">
-            SALIR
-          </Link>
+          <button
+            type="button"
+            className="btn ghost hud-mobile-only"
+            onClick={() => gameRef.current?.togglePause()}
+          >
+            {snap.state === "paused" ? "REANUDAR" : "PAUSA"}
+          </button>
+          <MobileHudMenu exitHref="/juegos/arkanoid" />
+          <div className="hud-desktop-only" style={{ display: "contents" }}>
+            <SkinSelect />
+            <Link href="/juegos/arkanoid" className="btn ghost">
+              SALIR
+            </Link>
+          </div>
         </div>
       </div>
       <div className="crt">
@@ -95,6 +113,7 @@ export function ArkanoidPlayer() {
           <span>RATÓN O ← → MOVER · P / ESC PAUSA</span>
         </div>
       </div>
+      <TouchPad onInput={onTouchInput} directions={PAD_DIRECTIONS} />
       {gameOver && (
         <GameOverModal
           gameId="arkanoid"

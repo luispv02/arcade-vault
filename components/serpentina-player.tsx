@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { GameOverModal } from "@/components/game-over-modal";
+import { MobileHudMenu } from "@/components/mobile-hud-menu";
 import { SkinSelect, useSkin } from "@/components/skin-select";
+import { TouchPad } from "@/components/touch-pad";
+import type { TouchAction } from "@/lib/games/touch";
 import { getSkinSnapshot } from "@/lib/skins";
 import {
   startSerpentina,
@@ -45,6 +48,9 @@ export function SerpentinaPlayer() {
   useEffect(() => {
     gameRef.current?.setSkin(skin);
   }, [skin]);
+  const onTouchInput = useCallback((action: TouchAction, down: boolean) => {
+    gameRef.current?.input(action, down);
+  }, []);
   const playAgain = () => {
     setSnap(INITIAL);
     setRun((r) => r + 1);
@@ -53,7 +59,7 @@ export function SerpentinaPlayer() {
     <div className="av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
+          <div className="hud-stat hud-secondary">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
               {sessionName}
@@ -63,7 +69,7 @@ export function SerpentinaPlayer() {
             <div className="l">Puntuación</div>
             <div className="v">{snap.score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat">
+          <div className="hud-stat hud-secondary">
             <div className="l">Longitud</div>
             <div className="v" style={{ color: "var(--green)" }}>
               {String(snap.length).padStart(2, "0")}
@@ -75,10 +81,20 @@ export function SerpentinaPlayer() {
           </div>
         </div>
         <div className="hud-actions">
-          <SkinSelect />
-          <Link href="/juegos/serpentina" className="btn ghost">
-            SALIR
-          </Link>
+          <button
+            type="button"
+            className="btn ghost hud-mobile-only"
+            onClick={() => gameRef.current?.togglePause()}
+          >
+            {snap.state === "paused" ? "REANUDAR" : "PAUSA"}
+          </button>
+          <MobileHudMenu exitHref="/juegos/serpentina" />
+          <div className="hud-desktop-only" style={{ display: "contents" }}>
+            <SkinSelect />
+            <Link href="/juegos/serpentina" className="btn ghost">
+              SALIR
+            </Link>
+          </div>
         </div>
       </div>
       <div className="crt">
@@ -97,6 +113,7 @@ export function SerpentinaPlayer() {
           <span>← ↑ → ↓ / WASD MOVER · P / ESC PAUSA</span>
         </div>
       </div>
+      <TouchPad onInput={onTouchInput} />
       {gameOver && (
         <GameOverModal
           gameId="serpentina"

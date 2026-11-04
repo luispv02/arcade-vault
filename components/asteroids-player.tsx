@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { GameOverModal } from "@/components/game-over-modal";
+import { MobileHudMenu } from "@/components/mobile-hud-menu";
 import { SkinSelect, useSkin } from "@/components/skin-select";
+import { TouchPad } from "@/components/touch-pad";
+import type { TouchAction } from "@/lib/games/touch";
 import { getSkinSnapshot } from "@/lib/skins";
 import {
   startAsteroids,
@@ -15,6 +18,9 @@ const INITIAL: AsteroidsSnapshot = {
   level: 1,
   state: "playing",
 };
+// Mando táctil: ← → giran, ↑ da impulso y A dispara; ↓ y B no se usan.
+const PAD_BUTTONS = { a: "DISPARO" };
+const PAD_DIRECTIONS: TouchAction[] = ["up", "left", "right"];
 // Juego real: el motor (lib/games/asteroids) dibuja en el canvas y avisa a React
 // solo cuando cambian puntos, vidas, nivel o estado. React nunca controla el juego.
 export function AsteroidsPlayer() {
@@ -44,6 +50,9 @@ export function AsteroidsPlayer() {
   useEffect(() => {
     gameRef.current?.setSkin(skin);
   }, [skin]);
+  const onTouchInput = useCallback((action: TouchAction, down: boolean) => {
+    gameRef.current?.input(action, down);
+  }, []);
   const playAgain = () => {
     setSnap(INITIAL);
     setRun((r) => r + 1);
@@ -52,7 +61,7 @@ export function AsteroidsPlayer() {
     <div className="av-player fade-in" data-skin={skin}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
+          <div className="hud-stat hud-secondary">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
               {sessionName}
@@ -66,16 +75,26 @@ export function AsteroidsPlayer() {
             <div className="l">Vidas</div>
             <div className="v">{"♥ ".repeat(snap.lives).trim() || "—"}</div>
           </div>
-          <div className="hud-stat level">
+          <div className="hud-stat level hud-secondary">
             <div className="l">Nivel</div>
             <div className="v">{String(snap.level).padStart(2, "0")}</div>
           </div>
         </div>
         <div className="hud-actions">
-          <SkinSelect />
-          <Link href="/juegos/asteroides" className="btn ghost">
-            SALIR
-          </Link>
+          <button
+            type="button"
+            className="btn ghost hud-mobile-only"
+            onClick={() => gameRef.current?.togglePause()}
+          >
+            {snap.state === "paused" ? "REANUDAR" : "PAUSA"}
+          </button>
+          <MobileHudMenu exitHref="/juegos/asteroides" />
+          <div className="hud-desktop-only" style={{ display: "contents" }}>
+            <SkinSelect />
+            <Link href="/juegos/asteroides" className="btn ghost">
+              SALIR
+            </Link>
+          </div>
         </div>
       </div>
       <div className="crt">
@@ -94,6 +113,11 @@ export function AsteroidsPlayer() {
           <span>← → ROTAR · ↑ EMPUJE · ESPACIO DISPARA</span>
         </div>
       </div>
+      <TouchPad
+        onInput={onTouchInput}
+        buttons={PAD_BUTTONS}
+        directions={PAD_DIRECTIONS}
+      />
       {gameOver && (
         <GameOverModal
           gameId="asteroides"
