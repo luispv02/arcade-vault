@@ -3225,7 +3225,6 @@ a {
     transform: none;
   }
 }
-
 /* ===== Skins (data-skin en .av-player). neon = estilo base; solo apariencia. ===== */
 .skin-select {
   display: flex;
@@ -3586,5 +3585,70 @@ a {
     padding: 10px 12px;
     font-size: 9px;
     min-height: 40px;
+  }
+}
+/* ===== Layout móvil del reproductor (SPEC 10): HUD, canvas y mando, sin scroll ===== */
+/* Sin rebote ni pull-to-refresh en la pantalla de juego. */
+html:has(.av-player),
+body:has(.av-player) {
+  overscroll-behavior: none;
+}
+.crt-screen {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (pointer: coarse) {
+  .crt-screen canvas {
+    touch-action: none;
+  }
+}
+@media (pointer: coarse), (max-width: 720px) {
+  .av-root:has(.av-player) footer,
+  .av-root:has(.av-player) .crt-bottom {
+    display: none !important;
+  }
+  /* El canvas va pegado arriba y el mando abajo (zona del pulgar); lo que sobra queda entre ambos. */
+  .av-root:has(.av-player) .crt {
+    flex: none;
+    padding: 8px;
+  }
+  .av-root:has(.av-player) .crt-screen {
+    flex: none;
+    aspect-ratio: 4 / 3;
+    width: 100%;
+  }
+  /* Tetris es vertical (460×600): ocupa el alto disponible y el canvas se ajusta con object-fit. */
+  .av-root:has(.tetris-canvas) .crt {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .av-root:has(.tetris-canvas) .crt-screen {
+    flex: 1 1 0;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+  .av-root:has(.av-player) .av-player {
+    padding: 0 10px;
+  }
+  .av-root:has(.av-player) .touch-pad {
+    margin-top: auto;
+  }
+}
+/* Móviles estrechos (hasta 400 px): el mando se reduce para que cruceta y A/B quepan sin desbordar. */
+@media (max-width: 400px) {
+  .tp-dpad {
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(3, 52px);
+  }
+  .tp-btn {
+    width: 68px;
+    height: 68px;
+  }
+  .tp-btn-a {
+    margin-bottom: 34px;
+  }
+  .tp-actions {
+    gap: 10px;
   }
 }
