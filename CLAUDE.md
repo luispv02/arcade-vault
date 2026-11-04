@@ -29,6 +29,12 @@ Usa siempre `/frontend-design` para diseñar la interfaz de usuario. Los diseño
 
 Convención de commits: `feat: …` en español; cada spec se entrega en una PR desde su rama `spec-NN-slug`.
 
+## Agentes
+
+Subagentes del proyecto en `.claude/agents/` (se invocan con `@nombre`):
+
+- `@game-planner` (`.claude/agents/game-planner.md`) — investiga (research web) y propone qué juego añadir al catálogo. Puntúa cada candidato /15 según diversidad de categorías, factibilidad en canvas 2D y reconocimiento clásico. No escribe código ni specs. Su memoria es el To-Do `references/game-suggestions-todo.md`, que crea y actualiza él mismo (pendientes, aceptados, implementados, descartados e historial) para no repetir sugerencias. Flujo: `@game-planner` → `/add-game` → `/spec-impl`. Al aceptar o descartar una sugerencia, díselo para que actualice el To-Do.
+
 ## Hooks y MCP
 
 - `.claude/settings.json` tiene un hook `PostToolUse` (Write/Edit) → `.claude/hooks/format-and-lint.sh`: **borra todas las líneas en blanco** de archivos JS/TS/CSS, aplica Prettier y `eslint --fix`; si ESLint falla, bloquea con el error. No luches contra él (no reinsertes líneas en blanco).
@@ -47,16 +53,16 @@ Next.js 16.4.4 con React 19.3: más reciente que los datos de entrenamiento habi
 
 ### Rutas
 
-| Ruta                 | Contenido                                                                         |
-| -------------------- | --------------------------------------------------------------------------------- |
-| `/`                  | Landing (`components/home/*`, datos estáticos en `lib/home.ts`)                   |
-| `/games`             | Biblioteca/catálogo (`components/library.tsx`) / (`references implemented-games.md`)                                  |
-| `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                           |
-| `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer` |
-| `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                    |
-| `/acceso`            | "Login" local (solo nombre)                                                       |
-| `/about`             | Acerca de + formulario de contacto                                                |
-| `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                          |
+| Ruta                 | Contenido                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `/`                  | Landing (`components/home/*`, datos estáticos en `lib/home.ts`)                      |
+| `/games`             | Biblioteca/catálogo (`components/library.tsx`) / (`references implemented-games.md`) |
+| `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                              |
+| `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer`    |
+| `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                       |
+| `/acceso`            | "Login" local (solo nombre)                                                          |
+| `/about`             | Acerca de + formulario de contacto                                                   |
+| `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                             |
 
 ### Datos (Supabase)
 
