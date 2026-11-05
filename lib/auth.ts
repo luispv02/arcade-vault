@@ -1,7 +1,10 @@
 // Validación y mensajes de error de la autenticación (SPEC 11). TS puro: sin React ni DOM.
 export const USERNAME_RE = /^[A-Z0-9_]{3,10}$/;
 export const PASSWORD_MIN = 8;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Email práctico: parte local, "@", dominio con punto y TLD de 2+ letras (SPEC 12).
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
+// Contraseña: 8 o más caracteres, sin reglas de composición (SPEC 12).
+export const PASSWORD_RE = /^.{8,}$/;
 export type FieldErrors = Partial<
   Record<"username" | "email" | "password", string>
 >;
@@ -23,7 +26,11 @@ export function validateSignIn(input: {
   const errors: FieldErrors = {};
   const emailError = validateEmail(normalizeEmail(input.email));
   if (emailError) errors.email = emailError;
-  if (!input.password) errors.password = "Escribe tu contraseña.";
+  if (!input.password) {
+    errors.password = "Escribe tu contraseña.";
+  } else if (!PASSWORD_RE.test(input.password)) {
+    errors.password = `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`;
+  }
   return errors;
 }
 export function validateSignUp(input: {
@@ -38,9 +45,6 @@ export function validateSignUp(input: {
   } else if (!USERNAME_RE.test(username)) {
     errors.username =
       "De 3 a 10 caracteres: letras sin tilde, números o guion bajo.";
-  }
-  if (!errors.password && input.password.length < PASSWORD_MIN) {
-    errors.password = `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`;
   }
   return errors;
 }
