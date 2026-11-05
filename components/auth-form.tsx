@@ -1,29 +1,23 @@
 "use client";
-
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/components/session-provider";
-
 export function AuthForm() {
   const router = useRouter();
-  const { login, logout } = useSession();
+  const { logout } = useSession();
   const [tab, setTab] = useState<"in" | "up">("in");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [email, setEmail] = useState("");
-
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login({ name: (user || "PLAYER1").toUpperCase().slice(0, 10) });
+    // Provisional (SPEC 11, paso 5): el login real llega en el paso 6.
+  };
+  const guest = async () => {
+    // Invitado: sin sesión (cierra cualquier sesión previa).
+    await logout();
     router.push("/games");
   };
-
-  const guest = () => {
-    // Invitado: sin av_user guardado (limpia cualquier sesión previa).
-    logout();
-    router.push("/games");
-  };
-
   return (
     <div className="av-auth-wrap fade-in">
       <div className="auth-card">
@@ -42,7 +36,6 @@ export function AuthForm() {
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
-
         <div className="auth-tabs">
           <button
             type="button"
@@ -59,7 +52,6 @@ export function AuthForm() {
             CREAR CUENTA
           </button>
         </div>
-
         <form onSubmit={submit}>
           <div className="field">
             <label htmlFor="auth-user">Usuario</label>
@@ -92,7 +84,6 @@ export function AuthForm() {
               placeholder="••••••••"
             />
           </div>
-
           <button
             className="btn lg"
             type="submit"
@@ -101,7 +92,6 @@ export function AuthForm() {
             {tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}
           </button>
         </form>
-
         <button
           type="button"
           className="btn ghost"
@@ -110,7 +100,6 @@ export function AuthForm() {
         >
           JUGAR COMO INVITADO
         </button>
-
         <div className="auth-divider">O CONTINÚA CON</div>
         <div className="social">
           <button className="btn ghost" type="button">
@@ -120,7 +109,6 @@ export function AuthForm() {
             ▣ GITHUB
           </button>
         </div>
-
         <div
           style={{
             marginTop: 18,
