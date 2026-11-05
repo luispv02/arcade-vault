@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import type { Database } from "./database.types";
-
 /**
  * Cliente de Supabase para el servidor (Route Handlers, Server Functions y
  * Server Components). Crea una instancia nueva por petición: nunca lo guardes
@@ -22,6 +22,9 @@ export async function createClient() {
       "Falta la variable de entorno NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
     );
   }
+  // Con sesión, supabase-js comprueba la caducidad del token con Date.now(): con
+  // cacheComponents eso rompe el prerender. Esta espera lo deja para la petición.
+  await connection();
   const cookieStore = await cookies();
   return createServerClient<Database>(url, key, {
     cookies: {
@@ -35,8 +38,8 @@ export async function createClient() {
           );
         } catch {
           // Se llamó desde un Server Component, donde no se pueden escribir
-          // cookies. Es seguro ignorarlo: el refresco de sesión lo hará
-          // proxy.ts cuando se implemente la spec de auth.
+          // cookies. Es seguro ignorarlo: el refresco de sesión lo hace
+          // proxy.ts (SPEC 11).
         }
       },
     },

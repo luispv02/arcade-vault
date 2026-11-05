@@ -46,6 +46,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      profiles: {
+        Row: {
+          created_at: string;
+          id: string;
+          username: string;
+          username_confirmed: boolean;
+        };
+        Insert: {
+          created_at?: string;
+          id: string;
+          username: string;
+          username_confirmed?: boolean;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          username?: string;
+          username_confirmed?: boolean;
+        };
+        Relationships: [];
+      };
       scores: {
         Row: {
           created_at: string;
@@ -53,6 +74,7 @@ export type Database = {
           id: string;
           name: string;
           score: number;
+          user_id: string | null;
         };
         Insert: {
           created_at?: string;
@@ -60,6 +82,7 @@ export type Database = {
           id?: string;
           name: string;
           score: number;
+          user_id?: string | null;
         };
         Update: {
           created_at?: string;
@@ -67,6 +90,7 @@ export type Database = {
           id?: string;
           name?: string;
           score?: number;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -81,6 +105,13 @@ export type Database = {
             columns: ["game_id"];
             isOneToOne: false;
             referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "scores_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];

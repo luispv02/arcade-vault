@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Arcade Vault: plataforma para jugar online juegos arcade y competir por la mayor puntuación. Estética retro/CRT con neón. Toda la UI y el contenido están en español.
 
-Juegos jugables hoy (motor real): **Asteroides**, **Tetris**, **Arkanoid** y **Serpentina**. El resto del catálogo (`bloque-buster`, `caida`, `gloton`, `invasores`, `rocas`, `ranaria`, `duelo-pixel`) usa el reproductor placeholder `components/game-player.tsx`.
+Catálogo actual (tabla `games`, 4 juegos, todos con motor real): **Asteroides**, **Tetris**, **Arkanoid** y **Serpentina**; detalle en `references/implemented-games.md`. `components/game-player.tsx` es solo el placeholder de fallback para ids sin motor registrado en `PLAYERS` (hoy ninguno del catálogo lo usa).
 
 ## Comandos
 
@@ -17,7 +17,7 @@ Juegos jugables hoy (motor real): **Asteroides**, **Tetris**, **Arkanoid** y **S
 
 ## Flujo de trabajo: Spec Driven Design
 
-Todo cambio grande pasa por una spec en `specs/NN-slug.md` (estado en la cabecera: Borrador → Aprobado → Implementado). Specs existentes: 01 MVP visual, 02 home, 03 about/contacto, 04 infraestructura Supabase, 05 Asteroides, 06 leaderboard y tabla de juegos, 07 Tetris, 08 Arkanoid, 09 Serpentina.
+Todo cambio grande pasa por una spec en `specs/NN-slug.md` (estado en la cabecera: Borrador → Aprobado → Implementado). Specs existentes: 01 MVP visual, 02 home, 03 about/contacto, 04 infraestructura Supabase, 05 Asteroides, 06 leaderboard y tabla de juegos, 07 Tetris, 08 Arkanoid, 09 Serpentina, 10 controles táctiles móviles, 11 autenticación con Supabase. Los borradores de `@game-jam` viven en `specs/game-jam/<game-id>/` (hoy `ranaria`, Borrador) y se numeran en `specs/NN-…` al aprobarlos.
 
 Skills del proyecto (en `.agents/skills/`, enlazadas desde `.claude/skills/`; solo las invoca el usuario):
 
@@ -25,26 +25,26 @@ Skills del proyecto (en `.agents/skills/`, enlazadas desde `.claude/skills/`; so
 - `/spec-impl <NN-slug>` — implementa una spec **Aprobada**: crea y cambia a la rama `spec-NN-slug` (automático por `specs/.spec-config.yml` → `AutoCreateBranch: true`) y avanza paso a paso.
 - `/add-game <carpeta|idea>` — skill propia: genera la spec para añadir un juego con guardado de puntuación y leaderboard, a partir de `references/templates/started-games/` o de una idea nueva. No escribe código. Su checklist (`.agents/skills/add-game/integration-checklist.md`) es la referencia canónica de cómo se integra un juego.
 
-Usa siempre `/frontend-design` para diseñar la interfaz de usuario. Los diseños de referencia (JSX/HTML/CSS del template original) están en `references/templates/`; los juegos originales en JS plano a portar están en `references/templates/started-games/`.
+Usa siempre `/frontend-design` para diseñar la interfaz de usuario. Los diseños de referencia (JSX/HTML/CSS del template original) están en `references/templates/`; los juegos originales en JS plano a portar están en `references/templates/started-games/` (`02-asteroids`, `03-tetris`, `04-arkanoid`; los assets de Serpentina, en `references/source-assets/snake-assets/`).
 
 Convención de commits: `feat: …` en español; cada spec se entrega en una PR desde su rama `spec-NN-slug`.
 
 ## Agentes
 
-Subagentes del proyecto en `.claude/agents/` (se invocan con `@nombre`):
+Subagentes en `.claude/agents/` (se invocan con `@nombre`). Reglas, memoria y detalles, en el archivo de cada agente:
 
-- `@game-planner` (`.claude/agents/game-planner.md`) — investiga (research web) y propone qué juego añadir al catálogo. Puntúa cada candidato /15 según diversidad de categorías, factibilidad en canvas 2D y reconocimiento clásico. No escribe código ni specs. Su memoria es el To-Do `references/game-suggestions-todo.md`, que crea y actualiza él mismo (pendientes, aceptados, implementados, descartados e historial) para no repetir sugerencias. Flujo: `@game-planner` → `/add-game` → `/spec-impl`. Al aceptar o descartar una sugerencia, díselo para que actualice el To-Do.
+- `@game-planner` — investiga y propone el próximo juego del catálogo; memoria en `references/game-suggestions-todo.md` (avísale al aceptar/descartar). Definición: `.claude/agents/game-planner.md`.
+- `@game-jam <tema>` — diseña un juego original y escribe sus specs (Borrador) en `specs/game-jam/<game-id>/`. Definición: `.claude/agents/game-jam.md`.
+- `@skin-designer <game-id>` — aplica las skins `neon`/`retro`/`clasico` a un juego (solo apariencia); memoria en `references/game-with-themes.md`. Definición: `.claude/agents/skin-designer.md`.
+- `@mobile-porter <game-id|ruta>` — audita un juego o página en escritorio y móvil según SPEC 10, sin editar código; memoria en `references/mobile-coverage.md`; necesita `npm run dev` y Playwright. Definición: `.claude/agents/mobile-porter.md`.
 
-- `@game-jam <tema>` (`.claude/agents/game-jam.md`) — recibe un tema, diseña un juego original y escribe ≥2 specs completas en `specs/game-jam/<game-id>/` (`01-motor-y-reglas.md`, `02-player-y-leaderboard.md` y, si aporta, una 03), en formato SPEC 07–09 y estado Borrador. Decide solo y registra sus decisiones en cada spec. No escribe código ni toca nada fuera de esa carpeta. Flujo: `@game-jam` → revisar/aprobar → numerar en `specs/NN-…` → `/spec-impl`.
-
-- `@skin-designer <game-id>` (`.claude/agents/skin-designer.md`) — aplica las 3 skins (`neon`, `retro`, `clasico`, todas legibles en modo oscuro) **solo al juego indicado**, uno por invocación; sin id solo muestra la cobertura. Solo cambia apariencia, nunca jugabilidad. Su memoria es `references/game-with-themes.md`. Si falta la infraestructura de skins, propone una spec con `/spec` antes de implementar.
-
-- `@mobile-porter <game-id|ruta>` (`.claude/agents/mobile-porter.md`) — audita **un** juego o **una** página en escritorio y navegador móvil (375/390 px, `pointer: coarse`) tomando como estándar `specs/10-controles-tactiles-moviles.md`, con Playwright. Solo audita: no edita código; reporta hallazgos (🔴/🟡/🟢) con evidencia. Su memoria es `references/mobile-coverage.md`. Sin argumento solo muestra la cobertura. Necesita `npm run dev` levantado.
+Flujo para juegos nuevos: `@game-planner` (o `@game-jam`) → `/add-game` (o revisar/numerar la spec) → `/spec-impl`. Ninguno escribe código de juego.
 
 ## Hooks y MCP
 
 - `.claude/settings.json` tiene un hook `PostToolUse` (Write/Edit) → `.claude/hooks/format-and-lint.sh`: **borra todas las líneas en blanco** de archivos JS/TS/CSS, aplica Prettier y `eslint --fix`; si ESLint falla, bloquea con el error. No luches contra él (no reinsertes líneas en blanco).
 - `.mcp.json` conecta el MCP de Supabase al proyecto. Úsalo para `list_tables`, `execute_sql` (solo lectura para comprobar), `apply_migration`, `get_advisors` y `generate_typescript_types`.
+- MCP de Playwright (configurado a nivel de usuario, no en `.mcp.json`): lo usa `@mobile-porter` para auditar en navegador.
 
 ## Advertencia sobre la versión de Next.js
 
@@ -59,34 +59,49 @@ Next.js 16.4.4 con React 19.3: más reciente que los datos de entrenamiento habi
 
 ### Rutas
 
-| Ruta                 | Contenido                                                                            |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| `/`                  | Landing (`components/home/*`, datos estáticos en `lib/home.ts`)                      |
-| `/games`             | Biblioteca/catálogo (`components/library.tsx`) / (`references implemented-games.md`) |
-| `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                              |
-| `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer`    |
-| `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                       |
-| `/acceso`            | "Login" local (solo nombre)                                                          |
-| `/about`             | Acerca de + formulario de contacto                                                   |
-| `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                             |
+| Ruta                 | Contenido                                                                         |
+| -------------------- | --------------------------------------------------------------------------------- |
+| `/`                  | Landing (`components/home/*`, datos estáticos en `lib/home.ts`)                   |
+| `/games`             | Biblioteca/catálogo (`components/library.tsx`)                                    |
+| `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                           |
+| `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer` |
+| `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                    |
+| `/acceso`            | Login y registro (email + contraseña, Google, GitHub) o invitado                  |
+| `/acceso/perfil`     | Elegir el username definitivo (usuarios OAuth, una sola vez); exige sesión        |
+| `GET /auth/callback` | Intercambia el `code` por sesión (confirmación de correo y OAuth) y redirige      |
+| `/about`             | Acerca de + formulario de contacto                                                |
+| `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                          |
 
 ### Datos (Supabase)
 
 - Clientes: `lib/supabase/server.ts` (lee `cookies()`, nueva instancia por petición, solo dentro de `<Suspense>` o Route Handlers) y `lib/supabase/client.ts` (componentes cliente). Tipos generados en `lib/supabase/database.types.ts`.
-- Esquema (`supabase/migrations/`): tabla `games` (catálogo; `cat` ∈ ARCADE/PUZZLE/SHOOTER/VERSUS, `color` ∈ cyan/magenta/yellow/green, `cover` = clase CSS, `sort_order`), tabla `scores` (`game_id`, `name` 1–10 chars, `score`, `created_at`), vista `game_stats` (`best`, `plays`). RLS: lectura pública e inserción pública en `scores`.
-- Lectura en servidor: `lib/data.ts` (`getGames`, `getGame`, `getTopScores`). Escritura desde el cliente: `lib/save-score.ts` (`saveScore(gameId, name, score)`). Tipos de dominio en `lib/games.ts`.
+- Esquema (`supabase/migrations/`): tabla `games` (catálogo; `cat` ∈ ARCADE/PUZZLE/SHOOTER/VERSUS, `color` ∈ cyan/magenta/yellow/green, `cover` = clase CSS, `sort_order`), tabla `scores` (`game_id`, `name` 1–10 chars, `score`, `created_at`, `user_id` nullable), tabla `profiles` (`id` → `auth.users`, `username` único `[A-Z0-9_]{3,10}`, `username_confirmed`; creada por el trigger `handle_new_user`; sin email), vista `game_stats` (`best`, `plays`). RLS: lectura pública de `games`, `scores` y `profiles`; `profiles` solo se actualiza por su dueño mientras `username_confirmed = false`; inserción en `scores` con `user_id` nulo (invitado) o con el `user_id` y el `name` del propio usuario autenticado.
+- Lectura en servidor: `lib/data.ts` (`getGames`, `getGame`, `getTopScores`). Escritura desde el cliente: `lib/save-score.ts` (`saveScore(gameId, name, score, userId?)`). Tipos de dominio en `lib/games.ts`.
 - Añadir un juego al catálogo = migración `<timestamp>_add_game_<id>.sql` con un `insert … on conflict do nothing`, aplicada con el MCP y copiada al repo. `scores`/`game_stats`/RLS no se tocan.
 
 ### Sesión
 
-No hay auth real: `lib/session.ts` guarda el usuario (`{ name }`, máx. 10, mayúsculas) en `localStorage` (`av_user`) con fallback en memoria, expuesto vía `useSyncExternalStore` en `components/session-provider.tsx` (`useSession()`). Invitado por defecto (`INVITADO`).
+Auth real con Supabase Auth (SPEC 11): email + contraseña con confirmación por correo, Google y GitHub.
+
+- `proxy.ts` (raíz; en Next 16 `middleware` está deprecado) + `lib/supabase/proxy.ts` refrescan la sesión con `getClaims()` en cada petición y hacen solo redirecciones optimistas (`/acceso` con sesión → `/games`; `/acceso/perfil` sin sesión → `/acceso`). No consultan la base de datos.
+- `components/session-provider.tsx` expone `useSession()` → `{ user, logout, saveScore }`. `user` (`SessionUser` en `lib/session.ts`: `id`, `name` = username del perfil, `email`) sale de `onAuthStateChange` + `profiles`, leído en el cliente; el primer render es siempre invitado (`null`). No existe `login`: lo hace `components/auth-form.tsx` con el cliente de Supabase.
+- Validación y mensajes de error en español: `lib/auth.ts` (TS puro). Menú de cuenta (Usuario, Correo, Cerrar sesión): `components/user-menu.tsx`.
+- **Invitado** = sin sesión de Supabase: nombre editable en `GameOverModal` (por defecto `INVITADO`) y puntuación sin `user_id`. Con sesión el nombre es el username, fijo.
+- `av_scores` (`localStorage`) solo lo usa el placeholder `GamePlayer`; `av_user` ya no existe y se borra al arrancar.
+- Para probar OAuth y el correo de confirmación hay que tener activos los proveedores y las Redirect URLs (`/auth/callback`) en el dashboard de Supabase.
 
 ### Juegos (patrón fijado por SPEC 05/06)
 
 - Motor en `lib/games/<id>/` (`game.ts`, `utils.ts`, `entities.ts`/`sprites.ts`/`levels.ts` según el juego): TS puro, **nunca importa React ni toca `document`**, sin estado global de módulo. API `start<X>(canvas, { onStateChange }) → { destroy() }`; snapshot con `score`, campos propios y `state` (incluye `"gameover"`), notificado solo cuando cambia. Bucle con `requestAnimationFrame` y `dt` limitado; listeners en `window`; `destroy()` limpia todo (seguro en StrictMode). Canvas de resolución fija escalado por CSS.
 - Player `components/<id>-player.tsx` (cliente): HUD `player-hud`, marco `.crt`, arranca el motor solo en `useEffect`, muestra `components/game-over-modal.tsx` (guardar puntuación una vez, jugar de nuevo, volver al vault) al llegar a `gameover`.
 - Registro en `PLAYERS` de `app/juegos/[id]/jugar/page.tsx`, portada `.cover-<id>` y clase del canvas en `app/globals.css`, assets en `public/games/<id>/` (audio solo tras interacción del usuario).
+- Skins (`neon`/`retro`/`clasico`): paletas por juego y store `av_skin` en `lib/skins.ts`; el motor recibe `skin` y expone `setSkin` (cambio en caliente); el player incluye `<SkinSelect />` (`components/skin-select.tsx`); tokens `[data-skin]` en `app/globals.css`. Solo apariencia.
+- Móvil (SPEC 10): el player usa `components/touch-pad.tsx` (mando virtual) y `components/mobile-hud-menu.tsx` (menú ☰ con Skin y SALIR); el motor traduce `TouchAction` (`lib/games/touch.ts`) a su propio input.
 - Ports fieles del original: no cambiar jugabilidad; documentar desviaciones en la spec. No recrear juegos comerciales concretos (nombre, arte, assets): usar título y portada propios.
+
+## Referencias (`references/`)
+
+`implemented-games.md` (catálogo actual), `game-suggestions-todo.md`, `game-with-themes.md` y `mobile-coverage.md` (memorias de los agentes; las actualizan ellos), `templates/` (diseño original y juegos a portar), `source-assets/` (assets originales).
 
 ## Variables de entorno
 
