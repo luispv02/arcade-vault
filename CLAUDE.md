@@ -37,6 +37,7 @@ Subagentes en `.claude/agents/` (se invocan con `@nombre`). Reglas, memoria y de
 - `@game-jam <tema>` — diseña un juego original y escribe sus specs (Borrador) en `specs/game-jam/<game-id>/`. Definición: `.claude/agents/game-jam.md`.
 - `@skin-designer <game-id>` — aplica las skins `neon`/`retro`/`clasico` a un juego (solo apariencia); memoria en `references/game-with-themes.md`. Definición: `.claude/agents/skin-designer.md`.
 - `@mobile-porter <game-id|ruta>` — audita un juego o página en escritorio y móvil según SPEC 10, sin editar código; memoria en `references/mobile-coverage.md`; necesita `npm run dev` y Playwright. Definición: `.claude/agents/mobile-porter.md`.
+- `@security-auditor <db|auth|app|headers|deps|todo>` — audita la seguridad de la base de datos y de la app según SPEC 11 y 12, sin editar código ni aplicar migraciones (Supabase en solo lectura); memoria en `references/security-audit.md`; `headers` necesita `npm run dev`. Definición: `.claude/agents/security-auditor.md`.
 
 Flujo para juegos nuevos: `@game-planner` (o `@game-jam`) → `/add-game` (o revisar/numerar la spec) → `/spec-impl`. Ninguno escribe código de juego.
 
@@ -108,7 +109,7 @@ Auth real con Supabase Auth (SPEC 11): email + contraseña con confirmación por
 
 ## Referencias (`references/`)
 
-`implemented-games.md` (catálogo actual), `game-suggestions-todo.md`, `game-with-themes.md` y `mobile-coverage.md` (memorias de los agentes; las actualizan ellos), `templates/` (diseño original y juegos a portar), `source-assets/` (assets originales).
+`implemented-games.md` (catálogo actual), `game-suggestions-todo.md`, `game-with-themes.md`, `mobile-coverage.md` y `security-audit.md` (memorias de los agentes; las actualizan ellos), `templates/` (diseño original y juegos a portar), `source-assets/` (assets originales).
 
 ## Variables de entorno
 
