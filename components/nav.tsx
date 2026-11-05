@@ -1,12 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/components/session-provider";
-
+import { UserMenu } from "@/components/user-menu";
 type NavKey = "inicio" | "biblioteca" | "salon" | "about" | "acceso";
-
 function isActive(pathname: string, key: NavKey): boolean {
   switch (key) {
     case "inicio":
@@ -22,15 +20,12 @@ function isActive(pathname: string, key: NavKey): boolean {
       return pathname.startsWith("/acceso");
   }
 }
-
 export function Nav() {
   const pathname = usePathname();
-  const { user, logout } = useSession();
+  const { user } = useSession();
   const [open, setOpen] = useState(false);
-
   const close = () => setOpen(false);
   const cls = (key: NavKey) => (isActive(pathname, key) ? "active" : undefined);
-
   return (
     <>
       <nav className="av-nav">
@@ -60,18 +55,17 @@ export function Nav() {
           <span>CRÉDITOS · 03</span>
         </div>
         {user ? (
-          <button
-            type="button"
-            className="btn ghost auth-btn"
-            onClick={logout}
-            title="Cerrar sesión"
-          >
-            {user.name} ▾
-          </button>
+          <UserMenu />
         ) : (
-          <Link href="/acceso" className="btn auth-btn" aria-label="Iniciar Sesión">
+          <Link
+            href="/acceso"
+            className="btn auth-btn"
+            aria-label="Iniciar Sesión"
+          >
             <span className="auth-full">Iniciar Sesión</span>
-            <span className="auth-short" aria-hidden="true">Entrar</span>
+            <span className="auth-short" aria-hidden="true">
+              Entrar
+            </span>
           </Link>
         )}
         <button
@@ -90,7 +84,6 @@ export function Nav() {
           </svg>
         </button>
       </nav>
-
       <div
         className={"av-mobile-backdrop" + (open ? " open" : "")}
         onClick={close}
@@ -114,18 +107,7 @@ export function Nav() {
         <Link href="/about" className={cls("about")} onClick={close}>
           Sobre nosotros
         </Link>
-        {user ? (
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              logout();
-              close();
-            }}
-          >
-            Cerrar sesión ({user.name})
-          </a>
-        ) : (
+        {user ? null : (
           <Link href="/acceso" className={cls("acceso")} onClick={close}>
             Iniciar Sesión
           </Link>
