@@ -1913,6 +1913,16 @@ a {
   opacity: 0.55;
   cursor: progress;
 }
+.auth-note {
+  margin: 0 0 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+.auth-note strong {
+  color: var(--cyan);
+}
 .auth-sent {
   text-align: center;
   padding: 6px 0 2px;

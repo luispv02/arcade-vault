@@ -105,6 +105,27 @@ export function AuthForm({
       setBusy(false);
     }
   };
+  // Google / GitHub: Supabase redirige al proveedor y este vuelve a /auth/callback.
+  // Si el flujo arranca bien, la página se descarga y `busy` no se libera hasta entonces.
+  const oauth = async (provider: "google" | "github") => {
+    if (busy) return;
+    setFormError(null);
+    setErrors({});
+    setBusy(true);
+    try {
+      const { error } = await createClient().auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        setFormError(authErrorMessage(error));
+        setBusy(false);
+      }
+    } catch {
+      setFormError(authErrorMessage({}));
+      setBusy(false);
+    }
+  };
   const guest = async () => {
     // Invitado: sin sesión (cierra cualquier sesión previa).
     await logout();
@@ -253,10 +274,20 @@ export function AuthForm({
             </button>
             <div className="auth-divider">O CONTINÚA CON</div>
             <div className="social">
-              <button className="btn ghost" type="button">
+              <button
+                className="btn ghost"
+                type="button"
+                disabled={busy}
+                onClick={() => oauth("google")}
+              >
                 ◆ GOOGLE
               </button>
-              <button className="btn ghost" type="button">
+              <button
+                className="btn ghost"
+                type="button"
+                disabled={busy}
+                onClick={() => oauth("github")}
+              >
                 ▣ GITHUB
               </button>
             </div>
