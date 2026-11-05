@@ -18,9 +18,11 @@ export function GameOverModal({
 }) {
   const { user } = useSession();
   const [save, setSave] = useState<SaveStatus>("idle");
-  // null = sin editar: se usa el nombre de la sesión (que se lee tras el montaje).
+  // Invitado: nombre editable (por defecto INVITADO). Con sesión (SPEC 11) el nombre
+  // es el username del perfil, fijo: la RLS de `scores` exige que coincida.
   const [nameEdit, setNameEdit] = useState<string | null>(null);
-  const name = nameEdit ?? user?.name ?? "INVITADO";
+  const locked = !!user;
+  const name = user?.name ?? nameEdit ?? "INVITADO";
   // Con el modal abierto, el motor no debe recibir teclas que no vengan del modal
   // (p. ej. ESPACIO con el foco en el <body> reiniciaría la partida sin guardar).
   useEffect(() => {
@@ -40,7 +42,7 @@ export function GameOverModal({
     const finalName = name.trim().toUpperCase().slice(0, 10);
     if (!finalName || save === "saving" || save === "saved") return;
     setSave("saving");
-    const { ok } = await saveScore(gameId, finalName, score);
+    const { ok } = await saveScore(gameId, finalName, score, user?.id);
     setSave(ok ? "saved" : "error");
   };
   return (
@@ -68,8 +70,9 @@ export function GameOverModal({
                 onChange={(e) =>
                   setNameEdit(e.target.value.toUpperCase().slice(0, 10))
                 }
+                readOnly={locked}
                 placeholder="TU NOMBRE"
-                aria-label="Tu nombre"
+                aria-label={locked ? "Tu usuario" : "Tu nombre"}
                 maxLength={10}
                 autoFocus
               />
