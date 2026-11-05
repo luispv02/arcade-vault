@@ -23,6 +23,11 @@ interface SessionContextValue {
   saveScore: (entry: Omit<SavedScore, "at">) => void;
 }
 const SessionContext = createContext<SessionContextValue | null>(null);
+// Google entrega `picture` y GitHub `avatar_url`; solo se aceptan URLs https.
+function avatarFromMetadata(meta: Record<string, unknown> | undefined) {
+  const url = meta?.avatar_url ?? meta?.picture;
+  return typeof url === "string" && url.startsWith("https://") ? url : null;
+}
 export function SessionProvider({ children }: { children: ReactNode }) {
   // Servidor y primer render de hidratación: invitado (null). Tras montar,
   // `onAuthStateChange` entrega la sesión real sin errores de hidratación.
@@ -57,6 +62,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               id: session.user.id,
               name: data.username,
               email: session.user.email ?? null,
+              avatarUrl: avatarFromMetadata(session.user.user_metadata),
             }
           : null,
       );

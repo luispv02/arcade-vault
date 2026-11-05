@@ -17,7 +17,7 @@ Catálogo actual (tabla `games`, 4 juegos, todos con motor real): **Asteroides**
 
 ## Flujo de trabajo: Spec Driven Design
 
-Todo cambio grande pasa por una spec en `specs/NN-slug.md` (estado en la cabecera: Borrador → Aprobado → Implementado). Specs existentes: 01 MVP visual, 02 home, 03 about/contacto, 04 infraestructura Supabase, 05 Asteroides, 06 leaderboard y tabla de juegos, 07 Tetris, 08 Arkanoid, 09 Serpentina, 10 controles táctiles móviles. Los borradores de `@game-jam` viven en `specs/game-jam/<game-id>/` (hoy `ranaria`, Borrador) y se numeran en `specs/NN-…` al aprobarlos.
+Todo cambio grande pasa por una spec en `specs/NN-slug.md` (estado en la cabecera: Borrador → Aprobado → Implementado). Specs existentes: 01 MVP visual, 02 home, 03 about/contacto, 04 infraestructura Supabase, 05 Asteroides, 06 leaderboard y tabla de juegos, 07 Tetris, 08 Arkanoid, 09 Serpentina, 10 controles táctiles móviles, 11 autenticación con Supabase. Los borradores de `@game-jam` viven en `specs/game-jam/<game-id>/` (hoy `ranaria`, Borrador) y se numeran en `specs/NN-…` al aprobarlos.
 
 Skills del proyecto (en `.agents/skills/`, enlazadas desde `.claude/skills/`; solo las invoca el usuario):
 
@@ -66,20 +66,29 @@ Next.js 16.4.4 con React 19.3: más reciente que los datos de entrenamiento habi
 | `/juegos/[id]`       | Detalle del juego + top de puntuaciones                                           |
 | `/juegos/[id]/jugar` | Reproductor: mapa `PLAYERS` id → componente; si no está, placeholder `GamePlayer` |
 | `/salon?juego=<id>`  | Salón de la Fama (leaderboard)                                                    |
-| `/acceso`            | "Login" local (solo nombre)                                                       |
+| `/acceso`            | Login y registro (email + contraseña, Google, GitHub) o invitado                  |
+| `/acceso/perfil`     | Elegir el username definitivo (usuarios OAuth, una sola vez); exige sesión        |
+| `GET /auth/callback` | Intercambia el `code` por sesión (confirmación de correo y OAuth) y redirige      |
 | `/about`             | Acerca de + formulario de contacto                                                |
 | `POST /api/contact`  | Envía el formulario con Resend (`lib/contact.ts` valida)                          |
 
 ### Datos (Supabase)
 
 - Clientes: `lib/supabase/server.ts` (lee `cookies()`, nueva instancia por petición, solo dentro de `<Suspense>` o Route Handlers) y `lib/supabase/client.ts` (componentes cliente). Tipos generados en `lib/supabase/database.types.ts`.
-- Esquema (`supabase/migrations/`): tabla `games` (catálogo; `cat` ∈ ARCADE/PUZZLE/SHOOTER/VERSUS, `color` ∈ cyan/magenta/yellow/green, `cover` = clase CSS, `sort_order`), tabla `scores` (`game_id`, `name` 1–10 chars, `score`, `created_at`), vista `game_stats` (`best`, `plays`). RLS: lectura pública e inserción pública en `scores`.
-- Lectura en servidor: `lib/data.ts` (`getGames`, `getGame`, `getTopScores`). Escritura desde el cliente: `lib/save-score.ts` (`saveScore(gameId, name, score)`). Tipos de dominio en `lib/games.ts`.
+- Esquema (`supabase/migrations/`): tabla `games` (catálogo; `cat` ∈ ARCADE/PUZZLE/SHOOTER/VERSUS, `color` ∈ cyan/magenta/yellow/green, `cover` = clase CSS, `sort_order`), tabla `scores` (`game_id`, `name` 1–10 chars, `score`, `created_at`, `user_id` nullable), tabla `profiles` (`id` → `auth.users`, `username` único `[A-Z0-9_]{3,10}`, `username_confirmed`; creada por el trigger `handle_new_user`; sin email), vista `game_stats` (`best`, `plays`). RLS: lectura pública de `games`, `scores` y `profiles`; `profiles` solo se actualiza por su dueño mientras `username_confirmed = false`; inserción en `scores` con `user_id` nulo (invitado) o con el `user_id` y el `name` del propio usuario autenticado.
+- Lectura en servidor: `lib/data.ts` (`getGames`, `getGame`, `getTopScores`). Escritura desde el cliente: `lib/save-score.ts` (`saveScore(gameId, name, score, userId?)`). Tipos de dominio en `lib/games.ts`.
 - Añadir un juego al catálogo = migración `<timestamp>_add_game_<id>.sql` con un `insert … on conflict do nothing`, aplicada con el MCP y copiada al repo. `scores`/`game_stats`/RLS no se tocan.
 
 ### Sesión
 
-No hay auth real: `lib/session.ts` guarda el usuario (`{ name }`, máx. 10, mayúsculas) en `localStorage` (`av_user`) con fallback en memoria, expuesto vía `useSyncExternalStore` en `components/session-provider.tsx` (`useSession()`). Invitado por defecto (`INVITADO`).
+Auth real con Supabase Auth (SPEC 11): email + contraseña con confirmación por correo, Google y GitHub.
+
+- `proxy.ts` (raíz; en Next 16 `middleware` está deprecado) + `lib/supabase/proxy.ts` refrescan la sesión con `getClaims()` en cada petición y hacen solo redirecciones optimistas (`/acceso` con sesión → `/games`; `/acceso/perfil` sin sesión → `/acceso`). No consultan la base de datos.
+- `components/session-provider.tsx` expone `useSession()` → `{ user, logout, saveScore }`. `user` (`SessionUser` en `lib/session.ts`: `id`, `name` = username del perfil, `email`) sale de `onAuthStateChange` + `profiles`, leído en el cliente; el primer render es siempre invitado (`null`). No existe `login`: lo hace `components/auth-form.tsx` con el cliente de Supabase.
+- Validación y mensajes de error en español: `lib/auth.ts` (TS puro). Menú de cuenta (Usuario, Correo, Cerrar sesión): `components/user-menu.tsx`.
+- **Invitado** = sin sesión de Supabase: nombre editable en `GameOverModal` (por defecto `INVITADO`) y puntuación sin `user_id`. Con sesión el nombre es el username, fijo.
+- `av_scores` (`localStorage`) solo lo usa el placeholder `GamePlayer`; `av_user` ya no existe y se borra al arrancar.
+- Para probar OAuth y el correo de confirmación hay que tener activos los proveedores y las Redirect URLs (`/auth/callback`) en el dashboard de Supabase.
 
 ### Juegos (patrón fijado por SPEC 05/06)
 

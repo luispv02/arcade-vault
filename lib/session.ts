@@ -3,6 +3,8 @@ export interface SessionUser {
   id: string;
   name: string; // 3–10 caracteres, mayúsculas
   email: string | null;
+  /** Foto del proveedor OAuth (Google/GitHub); null con email y contraseña. */
+  avatarUrl: string | null;
 }
 export interface SavedScore {
   game: string;

@@ -9,6 +9,7 @@ export function UserMenu() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const cardId = useId();
@@ -49,17 +50,19 @@ export function UserMenu() {
         aria-controls={cardId}
         onClick={() => setOpen((o) => !o)}
       >
-        {/* Jugador en pixel art; hereda color y brillo del botón. */}
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <g fill="currentColor">
-            <rect x="5" y="2" width="6" height="2" />
-            <rect x="4" y="4" width="8" height="4" />
-            <rect x="5" y="8" width="6" height="1" />
-            <rect x="2" y="10" width="12" height="2" />
-            <rect x="2" y="12" width="12" height="2" opacity="0.55" />
-          </g>
-        </svg>
-        <span className="user-menu-name">{user.name}</span>
+        {user.avatarUrl && !imgFailed ? (
+          // Foto del proveedor: next/image exigiría configurar cada dominio.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.avatarUrl}
+            alt=""
+            referrerPolicy="no-referrer"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          // Sin foto (email y contraseña) o si no carga: inicial del username.
+          <span aria-hidden="true">{user.name.charAt(0)}</span>
+        )}
       </button>
       {open && (
         <div className="user-menu-card" id={cardId}>
