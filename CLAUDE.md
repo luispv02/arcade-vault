@@ -17,7 +17,7 @@ Catálogo actual (tabla `games`, 4 juegos, todos con motor real): **Asteroides**
 
 ## Flujo de trabajo: Spec Driven Design
 
-Todo cambio grande pasa por una spec en `specs/NN-slug.md` (estado en la cabecera: Borrador → Aprobado → Implementado). Specs existentes: 01 MVP visual, 02 home, 03 about/contacto, 04 infraestructura Supabase, 05 Asteroides, 06 leaderboard y tabla de juegos, 07 Tetris, 08 Arkanoid, 09 Serpentina, 10 controles táctiles móviles, 11 autenticación con Supabase. Los borradores de `@game-jam` viven en `specs/game-jam/<game-id>/` (hoy `ranaria`, Borrador) y se numeran en `specs/NN-…` al aprobarlos.
+Todo cambio grande pasa por una spec en `specs/NN-slug.md` (estado en la cabecera: Borrador → Aprobado → Implementado). Specs existentes: 01 MVP visual, 02 home, 03 about/contacto, 04 infraestructura Supabase, 05 Asteroides, 06 leaderboard y tabla de juegos, 07 Tetris, 08 Arkanoid, 09 Serpentina, 10 controles táctiles móviles, 11 autenticación con Supabase, 12 seguridad básica. Los borradores de `@game-jam` viven en `specs/game-jam/<game-id>/` (hoy `ranaria`, Borrador) y se numeran en `specs/NN-…` al aprobarlos.
 
 Skills del proyecto (en `.agents/skills/`, enlazadas desde `.claude/skills/`; solo las invoca el usuario):
 
@@ -85,10 +85,17 @@ Auth real con Supabase Auth (SPEC 11): email + contraseña con confirmación por
 
 - `proxy.ts` (raíz; en Next 16 `middleware` está deprecado) + `lib/supabase/proxy.ts` refrescan la sesión con `getClaims()` en cada petición y hacen solo redirecciones optimistas (`/acceso` con sesión → `/games`; `/acceso/perfil` sin sesión → `/acceso`). No consultan la base de datos.
 - `components/session-provider.tsx` expone `useSession()` → `{ user, logout, saveScore }`. `user` (`SessionUser` en `lib/session.ts`: `id`, `name` = username del perfil, `email`) sale de `onAuthStateChange` + `profiles`, leído en el cliente; el primer render es siempre invitado (`null`). No existe `login`: lo hace `components/auth-form.tsx` con el cliente de Supabase.
-- Validación y mensajes de error en español: `lib/auth.ts` (TS puro). Menú de cuenta (Usuario, Correo, Cerrar sesión): `components/user-menu.tsx`.
+- Validación y mensajes de error en español: `lib/auth.ts` (TS puro; `EMAIL_RE` con TLD de 2+ letras y `PASSWORD_RE = /^.{8,}$/`, aplicadas en login y registro: el formulario no llama a Supabase si no pasan). Menú de cuenta (Usuario, Correo, Cerrar sesión): `components/user-menu.tsx`.
 - **Invitado** = sin sesión de Supabase: nombre editable en `GameOverModal` (por defecto `INVITADO`) y puntuación sin `user_id`. Con sesión el nombre es el username, fijo.
 - `av_scores` (`localStorage`) solo lo usa el placeholder `GamePlayer`; `av_user` ya no existe y se borra al arrancar.
 - Para probar OAuth y el correo de confirmación hay que tener activos los proveedores y las Redirect URLs (`/auth/callback`) en el dashboard de Supabase.
+
+### Seguridad (SPEC 12)
+
+- **Cabeceras HTTP** en `next.config.ts` (`securityHeaders`, `source: "/(.*)"`): `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Strict-Transport-Security` y `Permissions-Policy`. No hay CSP (queda para otra spec).
+- **RLS** activo en `games`, `scores` y `profiles`; sin políticas de UPDATE/DELETE en `scores` ni `games`. Los permisos de tabla de `anon`/`authenticated` son los de Supabase por defecto: la barrera es RLS.
+- **Ajustes de Auth en el dashboard de Supabase** (no versionados en el repo): contraseña mínima = 8 y límite de signups/inicios de sesión por IP. Valores finales: pendientes de anotar en `specs/12-seguridad-basica.md`.
+- **Aviso aceptado:** `auth_leaked_password_protection` en `get_advisors` (exige plan Pro; el proyecto está en Free). Es el único aviso de seguridad esperado.
 
 ### Juegos (patrón fijado por SPEC 05/06)
 
